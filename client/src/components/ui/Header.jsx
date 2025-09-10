@@ -1,239 +1,303 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 
-const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const [isJoinDropdownOpen, setIsJoinDropdownOpen] = useState(false);
+const Header = ({ onSidebarToggle }) => {
+  const [isSearchFocused, setIsSearchFocused] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false)
+
+  // Mock search suggestions
+  const searchSuggestions = [
+    { type: 'user', text: 'Fresh Vegetables Lanka', category: 'Producer' },
+    { type: 'product', text: 'Organic Tomatoes', category: 'Vegetables' },
+    { type: 'category', text: 'Export Quality Spices', category: 'Category' },
+    { type: 'location', text: 'Kandy District', category: 'Location' },
+  ]
+
+  // Mock notifications
+  const notifications = [
+    {
+      id: 1,
+      type: 'order',
+      title: 'New Order Received',
+      message: 'You have received a new order for 50kg rice',
+      time: '2 min ago',
+      unread: true
+    },
+    {
+      id: 2,
+      type: 'message',
+      title: 'Message from Buyer',
+      message: 'Inquiry about your organic vegetables',
+      time: '15 min ago',
+      unread: true
+    },
+    {
+      id: 3,
+      type: 'system',
+      title: 'Profile Verification',
+      message: 'Your producer profile has been verified',
+      time: '1 hour ago',
+      unread: false
+    }
+  ]
+
+  const unreadCount = notifications.filter(n => n.unread).length
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-8xl mx-auto px-2 sm:px-4 lg:px-6">
-        <div className="flex justify-between items-center h-16">
-          {/* Left Section - Logo */}
-          <div className="flex items-center flex-shrink-0 w-1/4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gray-400 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">📦</span>
-              </div>
-              <span className="text-xl font-bold text-gray-800">HelaTrade</span>
-            </div>
+    <header className="sticky top-0 z-50 bg-white border-b border-primary-200 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          
+          {/* Left Section - Menu Button */}
+          <div className="flex items-center">
+            {/* Sidebar Toggle Button */}
+            <button
+              onClick={onSidebarToggle}
+              className="p-2 text-primary-600 hover:text-orange-600 hover:bg-primary-100 rounded-lg transition-colors lg:hidden mr-3"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
 
-          {/* Middle Section - Search Bar and Navigation */}
-          <div className="flex-1 flex items-center justify-center space-x-8 max-w-3xl">
-            {/* Search Bar */}
-            <div className="flex-1 max-w-lg">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Search anything..."
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-[10px] leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-[14px]"
-                />
+          {/* Search Bar Section */}
+          <div className="flex-1 max-w-2xl mx-8 relative">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                placeholder="Search products, producers, categories..."
+                className="block w-full pl-10 pr-4 py-2.5 border border-primary-300 rounded-full bg-primary-50 text-primary-900 placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              />
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
-              <a href="#" className="text-gray-700 hover:text-primary-600 font-medium transition-colors text-[14px] whitespace-nowrap">
+            {/* Search Suggestions Dropdown */}
+            {isSearchFocused && (searchQuery || true) && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                <div className="p-2">
+                  <div className="text-xs font-semibold text-primary-500 uppercase tracking-wide px-2 py-1">
+                    Quick Suggestions
+                  </div>
+                  {searchSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      className="w-full flex items-center px-3 py-2 text-left hover:bg-primary-50 rounded-md transition-colors"
+                      onClick={() => {
+                        setSearchQuery(suggestion.text)
+                        setIsSearchFocused(false)
+                      }}
+                    >
+                      <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                        {suggestion.type === 'user' && (
+                          <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {suggestion.type === 'product' && (
+                          <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v7h-2l-1-2H8l-1 2H5V5z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {suggestion.type === 'category' && (
+                          <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                          </svg>
+                        )}
+                        {suggestion.type === 'location' && (
+                          <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-primary-900 truncate">{suggestion.text}</p>
+                        <p className="text-xs text-primary-500">{suggestion.category}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Side Navigation */}
+          <div className="flex items-center space-x-4">
+            
+            {/* Navigation Menu Items */}
+            <nav className="hidden lg:flex items-center space-x-1">
+              <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-primary-700 hover:text-orange-600 hover:bg-primary-100 rounded-lg transition-colors">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L9 5.414V17a1 1 0 102 0V5.414l5.293 5.293a1 1 0 001.414-1.414l-7-7z"/>
+                </svg>
                 Home
               </a>
-              
-              {/* Categories Dropdown */}
-              <div className="relative">
-                <button 
-                  onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                  className="text-gray-700 hover:text-primary-600 font-medium transition-colors flex items-center space-x-1 text-[14px] whitespace-nowrap"
-                >
-                  <span>Categories</span>
-                  <svg className={`w-4 h-4 transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                {/* Categories Dropdown Menu */}
-                {isCategoriesOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-[10px] shadow-lg border border-gray-200 py-2 z-50">
-                    <a href="#" className="block px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100">Vegetables</a>
-                    <a href="#" className="block px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100">Fruits</a>
-                    <a href="#" className="block px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100">Spices & Herbs</a>
-                    <a href="#" className="block px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100">Dairy Products</a>
-                    <a href="#" className="block px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100">Seafood</a>
-                    <a href="#" className="block px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100">Rice & Grains</a>
-                  </div>
-                )}
-              </div>
-              
-              <a href="#" className="text-gray-700 hover:text-primary-600 font-medium transition-colors text-[14px] whitespace-nowrap">
-                Help
+              <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-primary-700 hover:text-orange-600 hover:bg-primary-100 rounded-lg transition-colors">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd"/>
+                </svg>
+                Explore Feed
               </a>
             </nav>
-          </div>
-
-          {/* Right Section - Auth Buttons */}
-          <div className="flex items-center justify-end space-x-3 w-1/4">
-            <button className="text-gray-700 hover:text-primary-600 font-medium transition-colors text-[14px] whitespace-nowrap">
-              Login
-            </button>
             
-            {/* Join Dropdown */}
+            {/* Create Button */}
+            <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors">
+              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Create Post
+            </button>
+
+            {/* Notifications */}
             <div className="relative">
-              <button 
-                onClick={() => setIsJoinDropdownOpen(!isJoinDropdownOpen)}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-[10px] font-medium transition-colors text-[14px] flex items-center space-x-1 whitespace-nowrap"
+              <button
+                onClick={() => {
+                  setIsNotificationDropdownOpen(!isNotificationDropdownOpen)
+                  setIsProfileDropdownOpen(false)
+                }}
+                className="relative p-2 text-primary-600 hover:text-orange-600 hover:bg-primary-100 rounded-lg transition-colors"
               >
-                <span>Join</span>
-                <svg className={`w-4 h-4 transition-transform ${isJoinDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-error-500 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
-              
-              {/* Join Dropdown Menu */}
-              {isJoinDropdownOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-[10px] shadow-lg border border-gray-200 py-2 z-50">
-                  <a href="#" className="px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                    <span>🌱</span>
-                    <span>Join as Producer</span>
-                  </a>
-                  <a href="#" className="px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                    <span>🏪</span>
-                    <span>Join as Store</span>
-                  </a>
+
+              {/* Notifications Dropdown */}
+              {isNotificationDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-primary-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                  <div className="p-4 border-b border-primary-100">
+                    <h3 className="text-lg font-semibold text-primary-900">Notifications</h3>
+                  </div>
+                  <div className="divide-y divide-primary-100">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 hover:bg-primary-50 cursor-pointer transition-colors ${
+                          notification.unread ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <div className="flex items-start">
+                          <div className={`flex-shrink-0 w-2 h-2 mt-2 rounded-full ${
+                            notification.unread ? 'bg-orange-500' : 'bg-primary-300'
+                          }`} />
+                          <div className="ml-3 flex-1">
+                            <p className="text-sm font-medium text-primary-900">{notification.title}</p>
+                            <p className="text-sm text-primary-600 mt-1">{notification.message}</p>
+                            <p className="text-xs text-primary-500 mt-1">{notification.time}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-4 border-t border-primary-100">
+                    <button className="w-full text-center text-sm text-orange-600 hover:text-orange-700 font-medium">
+                      View All Notifications
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="bg-gray-50 inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-primary-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
-            >
-              <span className="sr-only">Open main menu</span>
-              {!isMenuOpen ? (
-                <svg className="block h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            {/* Profile Menu */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsProfileDropdownOpen(!isProfileDropdownOpen)
+                  setIsNotificationDropdownOpen(false)
+                }}
+                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-primary-100 transition-colors"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">JD</span>
+                </div>
+                <div className="hidden lg:block text-left">
+                  <p className="text-sm font-medium text-primary-900">John Doe</p>
+                  <p className="text-xs text-primary-500">Producer</p>
+                </div>
+                <svg className="w-4 h-4 text-primary-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-              ) : (
-                <svg className="block h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              </button>
+
+              {/* Profile Dropdown */}
+              {isProfileDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-primary-200 rounded-lg shadow-lg z-50">
+                  <div className="p-4 border-b border-primary-100">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-lg font-medium">JD</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-primary-900">John Doe</p>
+                        <p className="text-xs text-primary-500">john.doe@example.com</p>
+                        <p className="text-xs text-orange-600 font-medium">Verified Producer</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="py-2">
+                    <a href="#" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                      My Profile
+                    </a>
+                    <a href="#" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                      </svg>
+                      My Products
+                    </a>
+                    <a href="#" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Orders
+                    </a>
+                    <a href="#" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                      </svg>
+                      Saved Items
+                    </a>
+                    <a href="#" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                      </svg>
+                      Settings
+                    </a>
+                  </div>
+
+                  <div className="border-t border-primary-100 py-2">
+                    <button className="flex items-center w-full px-4 py-2 text-sm text-error-600 hover:bg-error-50 transition-colors">
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                      </svg>
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
               )}
-            </button>
-          </div>
-        </div>
-        
-        {/* Mobile Search Bar */}
-        <div className="md:hidden pb-3">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
             </div>
-            <input
-              type="text"
-              placeholder="Search anything..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-[10px] leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-[14px]"
-            />
           </div>
         </div>
       </div>
-
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
-            <a href="#" className="text-gray-700 block px-3 py-2 rounded-md text-base font-medium">
-              Home
-            </a>
-            
-            {/* Mobile Categories */}
-            <div>
-              <button 
-                onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                className="w-full text-left text-gray-700 px-3 py-2 rounded-md text-base font-medium flex items-center justify-between"
-              >
-                <span>Categories</span>
-                <svg className={`w-4 h-4 transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {isCategoriesOpen && (
-                <div className="pl-6 space-y-1">
-                  <a href="#" className="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Vegetables</a>
-                  <a href="#" className="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Fruits</a>
-                  <a href="#" className="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Spices & Herbs</a>
-                  <a href="#" className="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Dairy Products</a>
-                  <a href="#" className="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Seafood</a>
-                  <a href="#" className="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900">Rice & Grains</a>
-                </div>
-              )}
-            </div>
-            
-            <a href="#" className="text-gray-700 block px-3 py-2 rounded-md text-base font-medium">
-              Help
-            </a>
-            
-            <div className="pt-4 pb-3 border-t border-gray-200">
-              <div className="flex items-center px-3 space-y-2 flex-col">
-                <button className="w-full text-left text-gray-700 hover:text-primary-600 font-medium transition-colors text-[14px]">
-                  Login
-                </button>
-                
-                {/* Mobile Join Dropdown */}
-                <div className="w-full">
-                  <button 
-                    onClick={() => setIsJoinDropdownOpen(!isJoinDropdownOpen)}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-[10px] font-medium transition-colors text-[14px] flex items-center justify-center space-x-1"
-                  >
-                    <span>Join</span>
-                    <svg className={`w-4 h-4 transition-transform ${isJoinDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {isJoinDropdownOpen && (
-                    <div className="mt-2 w-full bg-white rounded-[10px] border border-gray-200 py-2">
-                      <a href="#" className="px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                        <span>🌱</span>
-                        <span>Join as Producer</span>
-                      </a>
-                      <a href="#" className="px-4 py-2 text-[14px] text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                        <span>🏪</span>
-                        <span>Join as Store</span>
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Close dropdown when clicking outside */}
-      {isCategoriesOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsCategoriesOpen(false)}
-        ></div>
-      )}
-      
-      {/* Close join dropdown when clicking outside */}
-      {isJoinDropdownOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsJoinDropdownOpen(false)}
-        ></div>
-      )}
     </header>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header
