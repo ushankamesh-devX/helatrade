@@ -111,13 +111,10 @@ const RecentActivity = () => {
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
+        <div className="mb-12">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary-800 mb-4">
-            ⚡ Recent Activity
+            Recent Activity
           </h2>
-          <p className="text-lg text-primary-600 max-w-2xl mx-auto">
-            Stay updated with the latest happenings in the HelaTrade community. New producers, partnerships, and success stories.
-          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

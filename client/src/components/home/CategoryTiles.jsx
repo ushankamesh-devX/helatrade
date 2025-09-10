@@ -113,13 +113,10 @@ const CategoryTiles = () => {
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
+        <div className="mb-12">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary-800 mb-4">
-            🛍️ Product Categories
+            Product Categories
           </h2>
-          <p className="text-lg text-primary-600 max-w-2xl mx-auto">
-            Explore diverse categories of products from Sri Lankan producers. Find exactly what your store needs.
-          </p>
         </div>
 
         {/* Categories Grid */}
@@ -206,8 +203,8 @@ const CategoryTiles = () => {
 
         {/* Featured Category Showcase */}
         <div className="mt-16">
-          <h3 className="text-2xl font-bold text-primary-800 text-center mb-8">
-            🌟 This Week's Featured Category
+          <h3 className="text-2xl font-bold text-primary-800 mb-8">
+            This Week's Featured Category
           </h3>
           
           <div className="bg-gradient-to-r from-green-400 via-green-500 to-green-600 rounded-2xl overflow-hidden">

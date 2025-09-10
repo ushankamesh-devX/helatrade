@@ -60,13 +60,10 @@ const TrendingPostsFeed = () => {
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
+        <div className="mb-12">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary-800 mb-4">
-            🔥 Trending Posts
+            Trending Posts
           </h2>
-          <p className="text-lg text-primary-600 max-w-2xl mx-auto">
-            Discover what's hot in the producer community. Top posts from verified producers across Sri Lanka.
-          </p>
         </div>
 
         {/* Posts Grid */}

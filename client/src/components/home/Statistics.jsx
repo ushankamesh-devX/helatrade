@@ -129,13 +129,10 @@ const Statistics = () => {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            📊 Platform Statistics
+            Platform Statistics
           </h2>
-          <p className="text-xl text-primary-100 max-w-2xl mx-auto">
-            Real-time insights into our growing community of producers and retailers across Sri Lanka
-          </p>
         </div>
 
         {/* Statistics Grid */}
