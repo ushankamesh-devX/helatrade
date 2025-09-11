@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ProducerRecommendations = () => {
+  const navigate = useNavigate();
   const [followedProducers, setFollowedProducers] = useState(new Set());
 
   const recommendedProducers = [
@@ -89,7 +91,7 @@ const ProducerRecommendations = () => {
         
         <div className="space-y-4">
           {recommendedProducers.slice(0, 3).map((producer) => (
-            <div key={producer.id} className="border border-primary-100 rounded-lg p-4 hover:bg-primary-50 transition-colors">
+            <div key={producer.id} className="border border-primary-100 rounded-lg p-4 hover:bg-primary-50 transition-colors cursor-pointer" onClick={() => navigate(`/producer/${producer.id}`)}>
               <div className="flex items-start space-x-3">
                 <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-lg flex-shrink-0">
                   {producer.avatar}
@@ -137,7 +139,10 @@ const ProducerRecommendations = () => {
                   </div>
 
                   <button
-                    onClick={() => handleFollow(producer.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleFollow(producer.id);
+                    }}
                     className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
                       followedProducers.has(producer.id)
                         ? 'bg-green-100 text-green-700 border border-green-200'
@@ -181,7 +186,7 @@ const ProducerRecommendations = () => {
         <h3 className="text-lg font-semibold text-primary-900 mb-4">Who to Follow</h3>
         <div className="space-y-3">
           {recommendedProducers.slice(3, 5).map((producer) => (
-            <div key={producer.id} className="flex items-center justify-between">
+            <div key={producer.id} className="flex items-center justify-between cursor-pointer hover:bg-primary-50 p-2 rounded-lg transition-colors" onClick={() => navigate(`/producer/${producer.id}`)}>
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-sm">
                   {producer.avatar}
@@ -199,7 +204,10 @@ const ProducerRecommendations = () => {
                 </div>
               </div>
               <button
-                onClick={() => handleFollow(producer.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleFollow(producer.id);
+                }}
                 className={`py-1 px-3 rounded-lg text-xs font-medium transition-colors ${
                   followedProducers.has(producer.id)
                     ? 'bg-green-100 text-green-700'
