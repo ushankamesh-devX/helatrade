@@ -409,7 +409,7 @@ const ExploreProducts = () => {
         <main className="flex-1">
           {/* Page Header */}
           <div className="bg-white border-b border-primary-200">
-            <div className="max-w-7xlx mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8 py-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-primary-900">Explore Products</h1>
@@ -437,7 +437,7 @@ const ExploreProducts = () => {
           />
 
           {/* Main Content */}
-          <div className="max-w-7xlx mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
               
               {/* Left Sidebar - Filters Summary */}

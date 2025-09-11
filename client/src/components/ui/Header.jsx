@@ -49,7 +49,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-primary-200 shadow-sm">
-      <div className="max-w-7xlx mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
           {/* Left Section - Logo or Empty */}
@@ -183,7 +183,10 @@ const Header = () => {
             </nav>
             
             {/* Create Button */}
-            <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors ml-4">
+            <button 
+              onClick={() => navigate('/producer-dashboard')}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors ml-4"
+            >
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
@@ -289,6 +292,28 @@ const Header = () => {
                       </svg>
                       My Profile
                     </a>
+                    <a href="/producer-dashboard" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                      </svg>
+                      Producer Dashboard
+                    </a>
+                    <button 
+                      onClick={() => {
+                        navigate('/producer-dashboard')
+                        // You can add state to auto-select the profile tab
+                        setTimeout(() => {
+                          const event = new CustomEvent('selectProfileTab')
+                          window.dispatchEvent(event)
+                        }, 100)
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors text-left"
+                    >
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                      </svg>
+                      Edit Profile
+                    </button>
                     <a href="#" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
                       <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
