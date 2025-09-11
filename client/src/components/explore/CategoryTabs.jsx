@@ -15,7 +15,7 @@ const CategoryTabs = ({ activeCategory, onCategoryChange }) => {
 
   return (
     <div className="bg-white border-b border-primary-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xlx mx-auto px-4 sm:px-6 lg:px-8">
         {/* Mobile Dropdown */}
         <div className="md:hidden py-4">
           <select

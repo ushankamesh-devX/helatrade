@@ -1,26 +1,17 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/ui/Header';
-import Sidebar from '../components/ui/Sidebar';
 import Footer from '../components/ui/Footer';
 import PostCard from '../components/ui/PostCard';
+import ProductCard from '../components/ui/ProductCard';
 
 const ProducerProfile = () => {
   const { producerId } = useParams();
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [savedPosts, setSavedPosts] = useState(new Set());
-
-  const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const handleSidebarClose = () => {
-    setIsSidebarOpen(false);
-  };
 
   const handleConnect = () => {
     setIsConnected(!isConnected);
@@ -49,6 +40,17 @@ const ProducerProfile = () => {
   const handleContactProducer = (producer) => {
     console.log('Contacting producer:', producer.name);
     // Implement contact producer logic here
+  };
+
+  const handleContactForProduct = (product) => {
+    console.log('Contacting for product:', product.name);
+    // Implement contact for specific product logic here
+  };
+
+  const handleProductDetails = (product) => {
+    console.log('Viewing product details:', product.name);
+    // Implement product details view logic here
+    // Could navigate to a product details page or open a modal
   };
 
   // Mock producer data
@@ -138,45 +140,63 @@ const ProducerProfile = () => {
     {
       id: 1,
       name: "Premium Ceylon Black Tea",
+      description: "High-quality black tea from high-altitude plantations with rich flavor and aroma.",
       price: "$25/kg",
       image: "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
       rating: 4.9,
-      inStock: true
+      inStock: true,
+      category: "Black Tea",
+      isOrganic: true,
+      isFeatured: true,
+      minOrder: "10kg"
     },
     {
       id: 2,
       name: "Green Tea Special",
+      description: "Delicate green tea with natural antioxidants, perfect for health-conscious consumers.",
       price: "$30/kg",
       image: "https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
       rating: 4.7,
-      inStock: true
+      inStock: true,
+      category: "Green Tea",
+      isOrganic: true,
+      isFeatured: false,
+      minOrder: "5kg"
     },
     {
       id: 3,
       name: "White Tea Premium",
+      description: "Rare white tea with subtle flavor, handpicked from young tea buds.",
       price: "$45/kg",
       image: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
       rating: 4.8,
-      inStock: false
+      inStock: false,
+      category: "White Tea",
+      isOrganic: false,
+      isFeatured: true,
+      minOrder: "2kg"
+    },
+    {
+      id: 4,
+      name: "Earl Grey Blend",
+      description: "Classic Earl Grey blend with bergamot oil, perfect for afternoon tea.",
+      price: "$28/kg",
+      image: "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
+      rating: 4.6,
+      inStock: true,
+      category: "Flavored Tea",
+      isOrganic: false,
+      isFeatured: false,
+      minOrder: "8kg"
     }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Left Sidebar - Fixed position */}
-      <div className="hidden lg:block">
-        <Sidebar isOpen={true} onClose={() => {}} />
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      <div className="lg:hidden">
-        <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose} />
-      </div>
-
-      {/* Right Main Content with left margin for fixed sidebar */}
-      <div className="min-h-screen flex flex-col lg:ml-80">
+      {/* Main Content */}
+      <div className="min-h-screen flex flex-col">
         {/* Header */}
-        <Header onSidebarToggle={handleSidebarToggle} />
+        <Header />
         
         {/* Main Content Area */}
         <main className="flex-1">
@@ -192,7 +212,7 @@ const ProducerProfile = () => {
             
             {/* Producer Basic Info Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <div className="max-w-7xl mx-auto">
+              <div className="max-w-7xlx mx-auto">
                 <div className="flex items-end space-x-6">
                   {/* Avatar */}
                   <div className="w-24 h-24 md:w-32 md:h-32 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-4xl md:text-5xl border-4 border-white/30">
@@ -240,7 +260,7 @@ const ProducerProfile = () => {
 
           {/* Stats Bar */}
           <div className="bg-white border-b border-primary-200">
-            <div className="max-w-7xl mx-auto px-6">
+            <div className="max-w-7xlx mx-auto px-6">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 py-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary-900">{producer.followers.toLocaleString()}</div>
@@ -286,7 +306,7 @@ const ProducerProfile = () => {
           </div>
 
           {/* Content Area */}
-          <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="max-w-7xlx mx-auto px-6 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               
               {/* Main Content - Posts/Products */}
@@ -341,46 +361,15 @@ const ProducerProfile = () => {
                 {activeTab === 'products' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {products.map((product) => (
-                      <div key={product.id} className="bg-white rounded-lg border border-primary-200 overflow-hidden hover:shadow-lg transition-shadow">
-                        <img 
-                          src={product.image} 
-                          alt={product.name}
-                          className="w-full h-48 object-cover"
-                        />
-                        <div className="p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <h3 className="font-semibold text-primary-900">{product.name}</h3>
-                            <div className="flex items-center space-x-1">
-                              <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                              <span className="text-sm text-primary-600">{product.rating}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between mb-4">
-                            <span className="text-lg font-bold text-orange-600">{product.price}</span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              product.inStock 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'bg-red-100 text-red-700'
-                            }`}>
-                              {product.inStock ? 'In Stock' : 'Out of Stock'}
-                            </span>
-                          </div>
-                          
-                          <button 
-                            disabled={!product.inStock}
-                            className={`w-full py-2 rounded-lg font-medium transition-colors ${
-                              product.inStock
-                                ? 'bg-orange-600 text-white hover:bg-orange-700'
-                                : 'bg-primary-300 text-primary-500 cursor-not-allowed'
-                            }`}
-                          >
-                            {product.inStock ? 'Contact for Order' : 'Out of Stock'}
-                          </button>
-                        </div>
-                      </div>
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onContact={handleContactForProduct}
+                        onDetails={handleProductDetails}
+                        showContactButton={true}
+                        showDetailsButton={true}
+                        size="default"
+                      />
                     ))}
                   </div>
                 )}

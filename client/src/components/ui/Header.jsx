@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
-const Header = ({ onSidebarToggle }) => {
+const Header = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [isSearchFocused, setIsSearchFocused] = useState(false)
@@ -49,20 +49,12 @@ const Header = ({ onSidebarToggle }) => {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-primary-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xlx mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Left Section - Menu Button */}
+          {/* Left Section - Logo or Empty */}
           <div className="flex items-center">
-            {/* Sidebar Toggle Button */}
-            <button
-              onClick={onSidebarToggle}
-              className="p-2 text-primary-600 hover:text-orange-600 hover:bg-primary-100 rounded-lg transition-colors lg:hidden mr-3"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+            {/* Logo or brand could go here */}
           </div>
 
           {/* Search Bar Section */}
@@ -142,14 +134,16 @@ const Header = ({ onSidebarToggle }) => {
               <div 
                 className={`absolute top-1 bottom-1 bg-orange-100 border border-orange-200 rounded-md transition-all duration-300 ease-in-out ${
                   location.pathname === '/' 
-                    ? 'left-1 w-[calc(50%-4px)]' 
-                    : 'left-[calc(50%+2px)] w-[calc(50%-4px)]'
+                    ? 'left-1 w-[calc(33.33%-4px)]' 
+                    : location.pathname === '/explore'
+                    ? 'left-[calc(33.33%+2px)] w-[calc(33.33%-4px)]'
+                    : 'left-[calc(66.66%+4px)] w-[calc(33.33%-4px)]'
                 }`}
               />
               
               <button 
                 onClick={() => navigate('/')}
-                className={`relative z-10 flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 ${
+                className={`relative z-10 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 ${
                   location.pathname === '/' 
                     ? 'text-orange-700' 
                     : 'text-primary-600 hover:text-orange-600'
@@ -162,7 +156,7 @@ const Header = ({ onSidebarToggle }) => {
               </button>
               <button 
                 onClick={() => navigate('/explore')}
-                className={`relative z-10 flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 ${
+                className={`relative z-10 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 ${
                   location.pathname === '/explore' 
                     ? 'text-orange-700' 
                     : 'text-primary-600 hover:text-orange-600'
@@ -172,6 +166,19 @@ const Header = ({ onSidebarToggle }) => {
                   <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd"/>
                 </svg>
                 Explore
+              </button>
+              <button 
+                onClick={() => navigate('/explore-products')}
+                className={`relative z-10 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-300 ${
+                  location.pathname === '/explore-products' 
+                    ? 'text-orange-700' 
+                    : 'text-primary-600 hover:text-orange-600'
+                }`}
+              >
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v7h-2l-1-2H8l-1 2H5V5z" clipRule="evenodd" />
+                </svg>
+                Products
               </button>
             </nav>
             
@@ -351,6 +358,19 @@ const Header = ({ onSidebarToggle }) => {
               <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd"/>
             </svg>
             Explore
+          </button>
+          <button 
+            onClick={() => navigate('/explore-products')}
+            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+              location.pathname === '/explore-products' 
+                ? 'text-orange-700 bg-orange-100 border-l-4 border-orange-600' 
+                : 'text-primary-600 hover:text-orange-600 hover:bg-primary-50'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v7h-2l-1-2H8l-1 2H5V5z" clipRule="evenodd" />
+            </svg>
+            Products
           </button>
         </div>
       </div>

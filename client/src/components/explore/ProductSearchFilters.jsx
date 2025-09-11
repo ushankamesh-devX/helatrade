@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const SearchFilters = ({ filters, onFiltersChange }) => {
+const ProductSearchFilters = ({ filters, onFiltersChange }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -14,21 +14,25 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
     'Ampara',
     'Negombo',
     'Jaffna',
-    'Anuradhapura'
+    'Anuradhapura',
+    'Puttalam',
+    'Kurunegala',
+    'Polonnaruwa'
   ];
 
   const sortOptions = [
     { value: 'popularity', label: 'Most Popular' },
-    { value: 'recent', label: 'Most Recent' },
-    { value: 'likes', label: 'Most Liked' },
-    { value: 'comments', label: 'Most Commented' }
+    { value: 'recent', label: 'Recently Added' },
+    { value: 'price', label: 'Price: Low to High' },
+    { value: 'rating', label: 'Highest Rated' }
   ];
 
-  const dateRanges = [
-    { value: 'all', label: 'All Time' },
-    { value: 'today', label: 'Today' },
-    { value: 'week', label: 'This Week' },
-    { value: 'month', label: 'This Month' }
+  const priceRanges = [
+    { value: 'all', label: 'All Prices' },
+    { value: '0-500', label: 'Under Rs. 500' },
+    { value: '500-1000', label: 'Rs. 500 - 1,000' },
+    { value: '1000-2500', label: 'Rs. 1,000 - 2,500' },
+    { value: '2500+', label: 'Above Rs. 2,500' }
   ];
 
   const handleFilterChange = (key, value) => {
@@ -44,7 +48,7 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
 
   return (
     <div className="bg-white border-b border-primary-200">
-      <div className="max-w-8xlx mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="max-w-7xlx mx-auto px-4 sm:px-6 lg:px-8 py-4">
         
         {/* Main Search Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -61,7 +65,7 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search posts, producers, products..."
+                placeholder="Search products, producers, brands..."
                 className="block w-full pl-10 pr-12 py-3 border border-primary-300 rounded-lg bg-white text-primary-900 placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               />
               <button
@@ -98,7 +102,7 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
         {/* Filter Options */}
         {isFilterOpen && (
           <div className="mt-4 p-4 bg-primary-50 rounded-lg border border-primary-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               
               {/* Location Filter */}
               <div>
@@ -136,17 +140,17 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
                 </select>
               </div>
 
-              {/* Date Range */}
+              {/* Price Range */}
               <div>
                 <label className="block text-sm font-medium text-primary-700 mb-2">
-                  Date Range
+                  Price Range
                 </label>
                 <select
-                  value={filters.dateRange}
-                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                  value={filters.priceRange || 'all'}
+                  onChange={(e) => handleFilterChange('priceRange', e.target.value)}
                   className="w-full px-3 py-2 border border-primary-300 rounded-lg bg-white text-primary-900 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
                 >
-                  {dateRanges.map((range) => (
+                  {priceRanges.map((range) => (
                     <option key={range.value} value={range.value}>
                       {range.label}
                     </option>
@@ -154,15 +158,53 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
                 </select>
               </div>
 
-              {/* Additional Filters */}
+              {/* Product Features */}
               <div>
                 <label className="block text-sm font-medium text-primary-700 mb-2">
-                  Additional Filters
+                  Product Features
                 </label>
                 <div className="space-y-2">
                   <label className="flex items-center">
                     <input
                       type="checkbox"
+                      checked={filters.inStockOnly || false}
+                      onChange={(e) => handleFilterChange('inStockOnly', e.target.checked)}
+                      className="w-4 h-4 text-orange-600 border-primary-300 rounded focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-sm text-primary-600">In Stock Only</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={filters.organicOnly || false}
+                      onChange={(e) => handleFilterChange('organicOnly', e.target.checked)}
+                      className="w-4 h-4 text-orange-600 border-primary-300 rounded focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-sm text-primary-600">Organic Only</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={filters.featuredOnly || false}
+                      onChange={(e) => handleFilterChange('featuredOnly', e.target.checked)}
+                      className="w-4 h-4 text-orange-600 border-primary-300 rounded focus:ring-orange-500"
+                    />
+                    <span className="ml-2 text-sm text-primary-600">Featured Only</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Producer Type */}
+              <div>
+                <label className="block text-sm font-medium text-primary-700 mb-2">
+                  Producer Type
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={filters.verifiedOnly || false}
+                      onChange={(e) => handleFilterChange('verifiedOnly', e.target.checked)}
                       className="w-4 h-4 text-orange-600 border-primary-300 rounded focus:ring-orange-500"
                     />
                     <span className="ml-2 text-sm text-primary-600">Verified Only</span>
@@ -170,16 +212,11 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
+                      checked={filters.exportQuality || false}
+                      onChange={(e) => handleFilterChange('exportQuality', e.target.checked)}
                       className="w-4 h-4 text-orange-600 border-primary-300 rounded focus:ring-orange-500"
                     />
-                    <span className="ml-2 text-sm text-primary-600">With Images</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 text-orange-600 border-primary-300 rounded focus:ring-orange-500"
-                    />
-                    <span className="ml-2 text-sm text-primary-600">Trending Only</span>
+                    <span className="ml-2 text-sm text-primary-600">Export Quality</span>
                   </label>
                 </div>
               </div>
@@ -193,7 +230,12 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
                     category: 'All',
                     location: '',
                     sortBy: 'popularity',
-                    dateRange: 'all'
+                    priceRange: 'all',
+                    inStockOnly: false,
+                    organicOnly: false,
+                    featuredOnly: false,
+                    verifiedOnly: false,
+                    exportQuality: false
                   });
                 }}
                 className="text-sm text-primary-600 hover:text-orange-600 font-medium"
@@ -243,23 +285,45 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
               </button>
             </span>
           )}
-          {filters.sortBy !== 'popularity' && (
+          {filters.priceRange && filters.priceRange !== 'all' && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-              Sort: {sortOptions.find(opt => opt.value === filters.sortBy)?.label}
+              Price: {priceRanges.find(range => range.value === filters.priceRange)?.label}
               <button
-                onClick={() => handleFilterChange('sortBy', 'popularity')}
+                onClick={() => handleFilterChange('priceRange', 'all')}
                 className="ml-2 text-green-600 hover:text-green-800"
               >
                 ×
               </button>
             </span>
           )}
-          {filters.dateRange !== 'all' && (
+          {filters.inStockOnly && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800">
-              Date: {dateRanges.find(range => range.value === filters.dateRange)?.label}
+              In Stock Only
               <button
-                onClick={() => handleFilterChange('dateRange', 'all')}
+                onClick={() => handleFilterChange('inStockOnly', false)}
                 className="ml-2 text-purple-600 hover:text-purple-800"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.organicOnly && (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-100 text-emerald-800">
+              Organic Only
+              <button
+                onClick={() => handleFilterChange('organicOnly', false)}
+                className="ml-2 text-emerald-600 hover:text-emerald-800"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.verifiedOnly && (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800">
+              Verified Only
+              <button
+                onClick={() => handleFilterChange('verifiedOnly', false)}
+                className="ml-2 text-indigo-600 hover:text-indigo-800"
               >
                 ×
               </button>
@@ -271,4 +335,4 @@ const SearchFilters = ({ filters, onFiltersChange }) => {
   );
 };
 
-export default SearchFilters;
+export default ProductSearchFilters;
