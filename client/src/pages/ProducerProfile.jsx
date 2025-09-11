@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/ui/Header';
-import Sidebar from '../components/ui/Sidebar';
 import Footer from '../components/ui/Footer';
 import PostCard from '../components/ui/PostCard';
 import ProductCard from '../components/ui/ProductCard';
@@ -9,19 +8,10 @@ import ProductCard from '../components/ui/ProductCard';
 const ProducerProfile = () => {
   const { producerId } = useParams();
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [savedPosts, setSavedPosts] = useState(new Set());
-
-  const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const handleSidebarClose = () => {
-    setIsSidebarOpen(false);
-  };
 
   const handleConnect = () => {
     setIsConnected(!isConnected);
@@ -203,20 +193,10 @@ const ProducerProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Left Sidebar - Fixed position */}
-      <div className="hidden lg:block">
-        <Sidebar isOpen={true} onClose={() => {}} />
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      <div className="lg:hidden">
-        <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose} />
-      </div>
-
-      {/* Right Main Content with left margin for fixed sidebar */}
-      <div className="min-h-screen flex flex-col lg:ml-80">
+      {/* Main Content */}
+      <div className="min-h-screen flex flex-col">
         {/* Header */}
-        <Header onSidebarToggle={handleSidebarToggle} />
+        <Header />
         
         {/* Main Content Area */}
         <main className="flex-1">
@@ -232,7 +212,7 @@ const ProducerProfile = () => {
             
             {/* Producer Basic Info Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <div className="max-w-7xl mx-auto">
+              <div className="max-w-7xlx mx-auto">
                 <div className="flex items-end space-x-6">
                   {/* Avatar */}
                   <div className="w-24 h-24 md:w-32 md:h-32 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-4xl md:text-5xl border-4 border-white/30">
@@ -280,7 +260,7 @@ const ProducerProfile = () => {
 
           {/* Stats Bar */}
           <div className="bg-white border-b border-primary-200">
-            <div className="max-w-7xl mx-auto px-6">
+            <div className="max-w-7xlx mx-auto px-6">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 py-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary-900">{producer.followers.toLocaleString()}</div>
@@ -326,7 +306,7 @@ const ProducerProfile = () => {
           </div>
 
           {/* Content Area */}
-          <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="max-w-7xlx mx-auto px-6 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               
               {/* Main Content - Posts/Products */}

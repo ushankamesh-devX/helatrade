@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/ui/Header';
-import Sidebar from '../components/ui/Sidebar';
 import Footer from '../components/ui/Footer';
 import TrendingPosts from '../components/explore/TrendingPosts';
 import CategoryTabs from '../components/explore/CategoryTabs';
@@ -8,7 +7,6 @@ import ProducerRecommendations from '../components/explore/ProducerRecommendatio
 import SearchFilters from '../components/explore/SearchFilters';
 
 const Explore = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -157,14 +155,6 @@ const Explore = () => {
   const [page, setPage] = useState(1);
   const postsPerPage = 3;
 
-  const handleSidebarToggle = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const handleSidebarClose = () => {
-    setIsSidebarOpen(false);
-  };
-
   const handleCategoryChange = (category) => {
     setActiveCategory(category);
     setFilters(prev => ({ ...prev, category }));
@@ -267,22 +257,10 @@ const Explore = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Left Sidebar - Fixed position */}
-      <div className="hidden lg:block">
-        <Sidebar isOpen={true} onClose={() => {}} />
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      <div className="lg:hidden">
-        <Sidebar isOpen={isSidebarOpen} onClose={handleSidebarClose} />
-      </div>
-
-      {/* Right Main Content with left margin for fixed sidebar */}
-      <div className="min-h-screen flex flex-col lg:ml-80">
+      {/* Main Content */}
+      <div className="min-h-screen flex flex-col">
         {/* Header */}
-        <Header 
-          onSidebarToggle={handleSidebarToggle} 
-        />
+        <Header />
         
         {/* Main Content Area */}
         <main className="flex-1">
@@ -316,7 +294,7 @@ const Explore = () => {
           />
 
           {/* Main Content Grid */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-7xlx mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
               
               {/* Left Column - Producer Recommendations (Hidden on smaller screens) */}
