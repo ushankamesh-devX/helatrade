@@ -1,16 +1,19 @@
 import React from "react";
-import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import Home from "./pages/Home";
+import Explore from "./pages/Explore";
 
 function App() {
   return (
-    <>
-    <div className="text-black">
-
-      <Home />
-    </div>
-    </>
+    <Router>
+      <div className="text-black">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/explore" element={<Explore />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

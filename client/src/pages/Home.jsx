@@ -36,7 +36,9 @@ const Home = () => {
       {/* Right Main Content with left margin for fixed sidebar */}
       <div className="min-h-screen flex flex-col lg:ml-80">
         {/* Header */}
-        <Header onSidebarToggle={handleSidebarToggle} />
+        <Header 
+          onSidebarToggle={handleSidebarToggle} 
+        />
         
         {/* Main Content Area */}
         <main className="flex-1">
