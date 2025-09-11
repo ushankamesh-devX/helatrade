@@ -276,7 +276,7 @@ const Header = ({ onSidebarToggle }) => {
                   </div>
                   
                   <div className="py-2">
-                    <a href="#" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
+                    <a href="/producer/highland-tea-estate" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
                       <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
