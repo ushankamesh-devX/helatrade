@@ -56,7 +56,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Content Container */}
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {/* Categories Section */}
             <div className="p-3">
               <div className="mb-3">

@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const Header = ({ onSidebarToggle }) => {
+  const navigate = useNavigate()
+  const location = useLocation()
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
@@ -83,7 +86,7 @@ const Header = ({ onSidebarToggle }) => {
 
             {/* Search Suggestions Dropdown */}
             {isSearchFocused && (searchQuery || true) && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto custom-scrollbar">
                 <div className="p-2">
                   <div className="text-xs font-semibold text-primary-500 uppercase tracking-wide px-2 py-1">
                     Quick Suggestions
@@ -131,26 +134,49 @@ const Header = ({ onSidebarToggle }) => {
           </div>
 
           {/* Right Side Navigation */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             
             {/* Navigation Menu Items */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-primary-700 hover:text-orange-600 hover:bg-primary-100 rounded-lg transition-colors">
+            <nav className="hidden lg:flex items-center bg-primary-50 rounded-lg p-1 relative">
+              {/* Sliding indicator */}
+              <div 
+                className={`absolute top-1 bottom-1 bg-orange-100 border border-orange-200 rounded-md transition-all duration-300 ease-in-out ${
+                  location.pathname === '/' 
+                    ? 'left-1 w-[calc(50%-4px)]' 
+                    : 'left-[calc(50%+2px)] w-[calc(50%-4px)]'
+                }`}
+              />
+              
+              <button 
+                onClick={() => navigate('/')}
+                className={`relative z-10 flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 ${
+                  location.pathname === '/' 
+                    ? 'text-orange-700' 
+                    : 'text-primary-600 hover:text-orange-600'
+                }`}
+              >
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L9 5.414V17a1 1 0 102 0V5.414l5.293 5.293a1 1 0 001.414-1.414l-7-7z"/>
                 </svg>
                 Home
-              </a>
-              <a href="#" className="flex items-center px-3 py-2 text-sm font-medium text-primary-700 hover:text-orange-600 hover:bg-primary-100 rounded-lg transition-colors">
+              </button>
+              <button 
+                onClick={() => navigate('/explore')}
+                className={`relative z-10 flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 ${
+                  location.pathname === '/explore' 
+                    ? 'text-orange-700' 
+                    : 'text-primary-600 hover:text-orange-600'
+                }`}
+              >
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd"/>
                 </svg>
-                Explore Feed
-              </a>
+                Explore
+              </button>
             </nav>
             
             {/* Create Button */}
-            <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors">
+            <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors ml-4">
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
@@ -158,7 +184,7 @@ const Header = ({ onSidebarToggle }) => {
             </button>
 
             {/* Notifications */}
-            <div className="relative">
+            <div className="relative ml-2">
               <button
                 onClick={() => {
                   setIsNotificationDropdownOpen(!isNotificationDropdownOpen)
@@ -178,7 +204,7 @@ const Header = ({ onSidebarToggle }) => {
 
               {/* Notifications Dropdown */}
               {isNotificationDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white border border-primary-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-primary-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto custom-scrollbar">
                   <div className="p-4 border-b border-primary-100">
                     <h3 className="text-lg font-semibold text-primary-900">Notifications</h3>
                   </div>
@@ -294,6 +320,38 @@ const Header = ({ onSidebarToggle }) => {
               )}
             </div>
           </div>
+        </div>
+      </div>
+      
+      {/* Mobile Navigation Menu */}
+      <div className="lg:hidden">
+        <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-primary-200">
+          <button 
+            onClick={() => navigate('/')}
+            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+              location.pathname === '/' 
+                ? 'text-orange-700 bg-orange-100 border-l-4 border-orange-600' 
+                : 'text-primary-600 hover:text-orange-600 hover:bg-primary-50'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L9 5.414V17a1 1 0 102 0V5.414l5.293 5.293a1 1 0 001.414-1.414l-7-7z"/>
+            </svg>
+            Home
+          </button>
+          <button 
+            onClick={() => navigate('/explore')}
+            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+              location.pathname === '/explore' 
+                ? 'text-orange-700 bg-orange-100 border-l-4 border-orange-600' 
+                : 'text-primary-600 hover:text-orange-600 hover:bg-primary-50'
+            }`}
+          >
+            <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clipRule="evenodd"/>
+            </svg>
+            Explore
+          </button>
         </div>
       </div>
     </header>
