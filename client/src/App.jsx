@@ -4,6 +4,7 @@ import "./App.css";
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import ExploreProducts from "./pages/ExploreProducts";
+import SingleProduct from "./pages/SingleProduct";
 import ProducerProfile from "./pages/ProducerProfile";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/explore-products" element={<ExploreProducts />} />
+          <Route path="/product/:id" element={<SingleProduct />} />
           <Route path="/producer/:producerId" element={<ProducerProfile />} />
         </Routes>
       </div>

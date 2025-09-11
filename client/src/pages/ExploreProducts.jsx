@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '../components/ui/Header';
 import Footer from '../components/ui/Footer';
 import ProductCard from '../components/ui/ProductCard';
@@ -6,6 +7,7 @@ import CategoryTabs from '../components/explore/CategoryTabs';
 import ProductSearchFilters from '../components/explore/ProductSearchFilters';
 
 const ExploreProducts = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -266,8 +268,7 @@ const ExploreProducts = () => {
   };
 
   const handleProductDetails = (product) => {
-    console.log('View details for:', product.name);
-    // Implement product details view
+    navigate(`/product/${product.id}`);
   };
 
   // Filter and sort products based on current filters
