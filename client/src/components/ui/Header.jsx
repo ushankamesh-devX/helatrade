@@ -49,7 +49,7 @@ const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-primary-200 shadow-sm">
-      <div className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
           {/* Left Section - Logo or Empty */}
@@ -297,6 +297,12 @@ const Header = () => {
                         <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                       </svg>
                       Producer Dashboard
+                    </a>
+                    <a href="/store-dashboard" className="flex items-center px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 transition-colors">
+                      <svg className="w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                      </svg>
+                      Store Dashboard
                     </a>
                     <button 
                       onClick={() => {

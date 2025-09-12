@@ -241,7 +241,7 @@ const ProducerProfile = () => {
             
             {/* Producer Basic Info Overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <div className="max-w-7xlxx mx-auto">
+              <div className="max-w-7xlxxx mx-auto">
                 <div className="flex items-end space-x-6">
                   {/* Avatar */}
                   <div className="w-24 h-24 md:w-32 md:h-32 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center overflow-hidden border-4 border-white/30">
@@ -297,7 +297,7 @@ const ProducerProfile = () => {
 
           {/* Stats Bar */}
           <div className="bg-white border-b border-primary-200">
-            <div className="max-w-7xlxx mx-auto px-6">
+            <div className="max-w-7xlxxx mx-auto px-6">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4 py-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary-900">{producer.followers.toLocaleString()}</div>
@@ -343,7 +343,7 @@ const ProducerProfile = () => {
           </div>
 
           {/* Content Area */}
-          <div className="max-w-7xlxx mx-auto px-6 py-8">
+          <div className="max-w-7xlxxx mx-auto px-6 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               
               {/* Main Content - Posts/Products */}

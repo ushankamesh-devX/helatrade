@@ -48,7 +48,7 @@ const ProductSearchFilters = ({ filters, onFiltersChange }) => {
 
   return (
     <div className="bg-white border-b border-primary-200">
-      <div className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8 py-4">
         
         {/* Main Search Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">

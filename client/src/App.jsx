@@ -8,6 +8,7 @@ import SingleProduct from "./pages/SingleProduct";
 import ProducerProfile from "./pages/ProducerProfile";
 import ProducerDashboard from "./pages/ProducerDashboard";
 import EditProfilePage from "./pages/EditProfilePage";
+import StoreDashboard from "./pages/StoreDashboard";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/product/:id" element={<SingleProduct />} />
           <Route path="/producer/:producerId" element={<ProducerProfile />} />
           <Route path="/producer-dashboard" element={<ProducerDashboard />} />
+          <Route path="/store-dashboard" element={<StoreDashboard />} />
           <Route path="/edit-profile" element={<EditProfilePage />} />
         </Routes>
       </div>

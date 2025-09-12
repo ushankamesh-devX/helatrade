@@ -209,7 +209,7 @@ const SingleProduct = () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+        <div className="max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
           <h2 className="text-2xl font-bold text-primary-900 mb-4">Product Not Found</h2>
           <p className="text-primary-600 mb-8">The product you're looking for doesn't exist or has been removed.</p>
           <button
@@ -230,7 +230,7 @@ const SingleProduct = () => {
       
       {/* Breadcrumb */}
       <div className="bg-white border-b border-primary-200">
-        <div className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center space-x-2 text-sm">
             <button 
               onClick={() => navigate('/')}
@@ -256,7 +256,7 @@ const SingleProduct = () => {
       </div>
 
       {/* Main Content */}
-      <main className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Left Column - Product Images */}

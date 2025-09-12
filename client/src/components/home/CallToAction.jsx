@@ -19,7 +19,7 @@ const CallToAction = () => {
         </div>
       </div>
 
-      <div className="relative max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           {/* Main Heading */}
           <h2 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
