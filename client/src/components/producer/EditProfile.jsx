@@ -10,7 +10,7 @@ const EditProfile = ({ onClose, onSave }) => {
     email: 'john.doe@example.com',
     phone: '+94 77 123 4567',
     location: 'Kandy, Sri Lanka',
-    category: 'Tea',
+    selectedCategories: ['tea', 'herbs'], // Changed from single 'category' to array 'selectedCategories'
     description: 'Premium Ceylon tea producer with over 20 years of experience in organic tea cultivation. We specialize in high-quality tea leaves from the hill country.',
     website: 'https://highlandtea.lk',
     establishedYear: '2003',
@@ -48,19 +48,30 @@ const EditProfile = ({ onClose, onSave }) => {
   // Get categories from API
   const { categories: apiCategories, loading: categoriesLoading } = useCategories()
   
-  // Transform categories for profile editing
+  // Transform categories for profile editing (add id and maintain icon for multiple selection)
   const categories = React.useMemo(() => {
     if (categoriesLoading || !apiCategories.length) {
       // Fallback categories while loading or if API fails
       return [
-        'Tea', 'Spices', 'Vegetables', 'Fruits', 'Coconut Products', 
-        'Rice', 'Herbs', 'Flowers', 'Seafood', 'Dairy', 'Other'
+        { id: 'vegetables', name: 'Vegetables', icon: '🥬' },
+        { id: 'fruits', name: 'Fruits', icon: '🍎' },
+        { id: 'grains', name: 'Grains & Rice', icon: '🌾' },
+        { id: 'spices', name: 'Spices', icon: '🌶️' },
+        { id: 'tea', name: 'Tea', icon: '🍃' },
+        { id: 'coconut', name: 'Coconut Products', icon: '🥥' },
+        { id: 'dairy', name: 'Dairy', icon: '🐄' },
+        { id: 'seafood', name: 'Seafood', icon: '🐟' },
+        { id: 'herbs', name: 'Herbs', icon: '🌿' },
+        { id: 'flowers', name: 'Flowers', icon: '🌺' }
       ]
     }
     
-    // Use API categories and add "Other" option
-    const categoryNames = [...apiCategories.map(cat => cat.name), 'Other']
-    return categoryNames
+    // Transform API categories to match expected format
+    return apiCategories.map(cat => ({
+      id: cat.slug,
+      name: cat.name,
+      icon: cat.icon
+    }))
   }, [apiCategories, categoriesLoading])
 
   const availableLanguages = [
@@ -82,6 +93,15 @@ const EditProfile = ({ onClose, onSave }) => {
         ...prev[parent],
         [field]: value
       }
+    }))
+  }
+
+  const toggleCategory = (categoryId) => {
+    setProfileData(prev => ({
+      ...prev,
+      selectedCategories: prev.selectedCategories.includes(categoryId)
+        ? prev.selectedCategories.filter(id => id !== categoryId)
+        : [...prev.selectedCategories, categoryId]
     }))
   }
 
@@ -237,7 +257,10 @@ const EditProfile = ({ onClose, onSave }) => {
               <div className="flex items-center space-x-4 mt-2 text-white text-opacity-75 text-sm">
                 <span>{profileData.location}</span>
                 <span>•</span>
-                <span>{profileData.category}</span>
+                <span>{profileData.selectedCategories.length > 0 ? 
+                  profileData.selectedCategories.map(catId => 
+                    categories.find(cat => cat.id === catId)?.name || catId
+                  ).join(', ') : 'No categories selected'}</span>
                 <span>•</span>
                 <span>Est. {profileData.establishedYear}</span>
               </div>
@@ -294,19 +317,6 @@ const EditProfile = ({ onClose, onSave }) => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-primary-700 mb-2">Category</label>
-                <select
-                  value={profileData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  className="w-full border border-primary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
                 <label className="block text-sm font-medium text-primary-700 mb-2">Established Year</label>
                 <input
                   type="number"
@@ -316,6 +326,30 @@ const EditProfile = ({ onClose, onSave }) => {
                   onChange={(e) => handleInputChange('establishedYear', e.target.value)}
                   className="w-full border border-primary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-primary-700 mb-4">Categories *</label>
+              <p className="text-sm text-primary-600 mb-4">
+                Select all categories that apply to your production
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {categories.map(category => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => toggleCategory(category.id)}
+                    className={`p-4 rounded-lg border text-center transition-all duration-200 ${
+                      profileData.selectedCategories.includes(category.id)
+                        ? 'bg-orange-100 border-orange-300 text-orange-700'
+                        : 'bg-white border-primary-200 text-primary-600 hover:border-primary-300 hover:bg-primary-50'
+                    }`}
+                  >
+                    <div className="text-2xl mb-2">{category.icon}</div>
+                    <div className="text-sm font-medium">{category.name}</div>
+                  </button>
+                ))}
               </div>
             </div>
 
