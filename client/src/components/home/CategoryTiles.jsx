@@ -1,8 +1,45 @@
 import React from 'react';
+import { useCategoriesWithStyling } from '../../hooks/useCategories';
 
 const CategoryTiles = () => {
-  // Categories data with Sri Lankan context
-  const categories = [
+  const { categories, loading, error } = useCategoriesWithStyling();
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-primary-800 mb-4">
+              Product Categories
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {[...Array(8)].map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="bg-gray-200 rounded-2xl h-48"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-16 bg-white">
+        <div className="max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Failed to load categories</h2>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Mock categories data (keeping as fallback)
+  const fallbackCategories = [
     {
       id: 1,
       name: "Vegetables",

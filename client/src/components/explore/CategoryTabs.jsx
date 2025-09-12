@@ -1,7 +1,44 @@
 import React from 'react';
+import { useCategories } from '../../hooks/useCategories';
 
 const CategoryTabs = ({ activeCategory, onCategoryChange }) => {
-  const categories = [
+  const { categories: apiCategories, loading, error } = useCategories();
+
+  // Transform API categories to match the expected format
+  const categories = React.useMemo(() => {
+    if (loading || error || !apiCategories.length) {
+      // Fallback categories
+      return [
+        { name: 'All', icon: '🔥', count: 'All Posts' },
+        { name: 'Vegetables', icon: '🥬', count: 245 },
+        { name: 'Fruits', icon: '🍎', count: 189 },
+        { name: 'Grains & Rice', icon: '🌾', count: 156 },
+        { name: 'Spices', icon: '🌶️', count: 98 },
+        { name: 'Tea & Coffee', icon: '🍃', count: 67 },
+        { name: 'Coconut Products', icon: '🥥', count: 89 },
+        { name: 'Seafood', icon: '🐟', count: 134 },
+        { name: 'Dairy Products', icon: '🥛', count: 45 },
+      ];
+    }
+
+    // Transform API data and add "All" option
+    const transformedCategories = [
+      { name: 'All', icon: '🔥', count: 'All Posts' }
+    ];
+
+    apiCategories.forEach(category => {
+      transformedCategories.push({
+        name: category.name,
+        icon: category.icon,
+        count: Math.floor(Math.random() * 200) + 45 // Mock count for now
+      });
+    });
+
+    return transformedCategories;
+  }, [apiCategories, loading, error]);
+
+  // Keep the original fallback data structure
+  const fallbackCategories = [
     { name: 'All', icon: '🔥', count: 'All Posts' },
     { name: 'Vegetables', icon: '🥬', count: 245 },
     { name: 'Fruits', icon: '🍎', count: 189 },
