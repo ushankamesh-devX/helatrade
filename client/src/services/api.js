@@ -78,4 +78,114 @@ export const categoriesAPI = {
   },
 };
 
+// Producers API
+export const producersAPI = {
+  // Get all producers
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/producers?${queryString}` : '/producers';
+    return apiRequest(endpoint);
+  },
+
+  // Get producer by ID or slug
+  getById: async (identifier) => {
+    return apiRequest(`/producers/${identifier}`);
+  },
+
+  // Search producers
+  search: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/producers/search?${queryString}` : '/producers/search';
+    return apiRequest(endpoint);
+  },
+
+  // Get featured producers
+  getFeatured: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/producers/featured?${queryString}` : '/producers/featured';
+    return apiRequest(endpoint);
+  },
+
+  // Get similar producers
+  getSimilar: async (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/producers/${id}/similar?${queryString}` : `/producers/${id}/similar`;
+    return apiRequest(endpoint);
+  },
+
+  // Create producer
+  create: async (producerData) => {
+    return apiRequest('/producers', {
+      method: 'POST',
+      body: JSON.stringify(producerData),
+    });
+  },
+
+  // Update producer
+  update: async (id, producerData) => {
+    return apiRequest(`/producers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(producerData),
+    });
+  },
+
+  // Delete producer
+  delete: async (id) => {
+    return apiRequest(`/producers/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Get producer posts
+  getPosts: async (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/producers/${id}/posts?${queryString}` : `/producers/${id}/posts`;
+    return apiRequest(endpoint);
+  },
+
+  // Get producer products
+  getProducts: async (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/producers/${id}/products?${queryString}` : `/producers/${id}/products`;
+    return apiRequest(endpoint);
+  },
+
+  // Update producer statistics
+  updateStats: async (id, stats) => {
+    return apiRequest(`/producers/${id}/stats`, {
+      method: 'PATCH',
+      body: JSON.stringify(stats),
+    });
+  },
+
+  // Contact producer
+  contact: async (id, contactData) => {
+    return apiRequest(`/producers/${id}/contact`, {
+      method: 'POST',
+      body: JSON.stringify(contactData),
+    });
+  },
+
+  // Follow/connect to producer
+  connect: async (id) => {
+    return apiRequest(`/producers/${id}/connect`, {
+      method: 'POST',
+    });
+  },
+
+  // Unfollow producer
+  disconnect: async (id) => {
+    return apiRequest(`/producers/${id}/connect`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Get producer connections
+  getConnections: async (id, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/producers/${id}/connections?${queryString}` : `/producers/${id}/connections`;
+    return apiRequest(endpoint);
+  },
+};
+
 export default apiRequest;

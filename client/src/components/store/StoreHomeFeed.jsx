@@ -90,28 +90,28 @@ const StoreHomeFeed = () => {
       id: 1,
       name: "Fresh Fruit Co-op",
       category: "Tropical Fruits",
-      followers: 1250,
+      connections: 1250,
       avatar: "FF",
       description: "Premium tropical fruit supplier with 15+ years experience",
-      isFollowing: false
+      isConnected: false
     },
     {
       id: 2,
       name: "Heritage Grains",
       category: "Ancient Grains",
-      followers: 890,
+      connections: 890,
       avatar: "HG",
       description: "Specializing in traditional and heritage grain varieties",
-      isFollowing: false
+      isConnected: false
     },
     {
       id: 3,
       name: "Seafood Direct",
       category: "Fresh Seafood",
-      followers: 2100,
+      connections: 2100,
       avatar: "SD",
       description: "Daily fresh catch from coastal fishing communities",
-      isFollowing: false
+      isConnected: false
     }
   ]
 
@@ -292,7 +292,7 @@ const StoreHomeFeed = () => {
                   </div>
                   <div>
                     <p className="font-medium text-primary-900 text-sm">{producer.name}</p>
-                    <p className="text-xs text-primary-500">{producer.category} • {producer.followers} followers</p>
+                    <p className="text-xs text-primary-500">{producer.category} • {producer.connections} connections</p>
                   </div>
                 </div>
                 <button className="px-3 py-1 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 transition-colors">

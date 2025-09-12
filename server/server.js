@@ -10,6 +10,7 @@ const app = express();
 
 // Import routes
 const categoryRoutes = require('./src/routes/categoryRoutes');
+const producerRoutes = require('./src/routes/producerRoutes');
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -36,6 +37,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // API Routes
 app.use('/api/categories', categoryRoutes);
+app.use('/api/producers', producerRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

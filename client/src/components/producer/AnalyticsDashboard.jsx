@@ -109,12 +109,12 @@ const AnalyticsDashboard = () => {
   ]
 
   const growthData = [
-    { month: 'Aug', followers: 580, connections: 18 },
-    { month: 'Sep', followers: 720, connections: 25 },
-    { month: 'Oct', followers: 850, connections: 32 },
-    { month: 'Nov', followers: 1020, connections: 41 },
-    { month: 'Dec', followers: 1180, connections: 48 },
-    { month: 'Jan', followers: 1340, connections: 58 }
+    { month: 'Aug', connections: 98 },
+    { month: 'Sep', connections: 145 },
+    { month: 'Oct', connections: 182 },
+    { month: 'Nov', connections: 203 },
+    { month: 'Dec', connections: 228 },
+    { month: 'Jan', connections: 258 }
   ]
 
   const timeRanges = [
@@ -263,19 +263,15 @@ const AnalyticsDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Growth Chart */}
         <div className="bg-white rounded-xl shadow-sm border border-primary-200 p-6">
-          <h3 className="text-lg font-semibold text-primary-900 mb-4">Growth Trends</h3>
+          <h3 className="text-lg font-semibold text-primary-900 mb-4">Connection Growth</h3>
           <div className="space-y-4">
             <div className="flex items-end space-x-2 h-40">
               {growthData.map((data, index) => (
                 <div key={data.month} className="flex-1 flex flex-col items-center">
                   <div className="w-full relative">
                     <div
-                      className="w-full bg-blue-500 rounded-t transition-all duration-500"
-                      style={{ height: `${(data.followers / 1340) * 120}px` }}
-                    />
-                    <div
-                      className="w-full bg-orange-500 rounded-t transition-all duration-500 mt-1"
-                      style={{ height: `${(data.connections / 58) * 60}px` }}
+                      className="w-full bg-orange-500 rounded-t transition-all duration-500"
+                      style={{ height: `${(data.connections / 258) * 120}px` }}
                     />
                   </div>
                   <div className="mt-2 text-xs text-primary-600">{data.month}</div>
@@ -283,10 +279,6 @@ const AnalyticsDashboard = () => {
               ))}
             </div>
             <div className="flex items-center justify-center space-x-6 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-blue-500 rounded" />
-                <span className="text-primary-600">Followers</span>
-              </div>
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-orange-500 rounded" />
                 <span className="text-primary-600">Connections</span>

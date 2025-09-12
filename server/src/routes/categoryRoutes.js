@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const categoryController = require('../controllers/categoryController');
-const { validateCreateCategory, validateUpdateCategory } = require('../middleware/validation');
+const { 
+  validateCreateCategory, 
+  validateUpdateCategory,
+  handleValidationErrors 
+} = require('../middleware/validation');
 
 // GET /api/categories - Get all categories
 router.get('/', categoryController.getAllCategories);
@@ -13,10 +17,18 @@ router.get('/:id', categoryController.getCategoryById);
 router.get('/slug/:slug', categoryController.getCategoryBySlug);
 
 // POST /api/categories - Create new category
-router.post('/', validateCreateCategory, categoryController.createCategory);
+router.post('/', 
+  validateCreateCategory, 
+  handleValidationErrors,
+  categoryController.createCategory
+);
 
 // PUT /api/categories/:id - Update category
-router.put('/:id', validateUpdateCategory, categoryController.updateCategory);
+router.put('/:id', 
+  validateUpdateCategory, 
+  handleValidationErrors,
+  categoryController.updateCategory
+);
 
 // DELETE /api/categories/:id - Delete category (soft delete)
 router.delete('/:id', categoryController.deleteCategory);

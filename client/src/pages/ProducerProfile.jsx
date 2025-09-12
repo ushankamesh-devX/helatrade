@@ -93,8 +93,7 @@ const ProducerProfile = () => {
     profileImage: "https://images.unsplash.com/photo-1566471369132-2f8bb474e60c?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80",
     coverImage: "https://images.unsplash.com/photo-1563822249366-dab87a7a5c03?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     verified: true,
-    followers: 2450,
-    following: 180,
+    connections: 245,
     posts: 127,
     likes: 8950,
     joinedDate: "March 2022",
@@ -335,14 +334,10 @@ const ProducerProfile = () => {
           {/* Stats Bar */}
           <div className="bg-white border-b border-primary-200">
             <div className="max-w-7xlxxx mx-auto px-6">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 py-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary-900">{producer.followers.toLocaleString()}</div>
-                  <div className="text-sm text-primary-600">Followers</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-primary-900">{producer.following}</div>
-                  <div className="text-sm text-primary-600">Following</div>
+                  <div className="text-2xl font-bold text-primary-900">{producer.connections.toLocaleString()}</div>
+                  <div className="text-sm text-primary-600">Connections</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary-900">{producer.posts}</div>
@@ -661,9 +656,9 @@ const ProducerProfile = () => {
                   <h3 className="text-lg font-semibold text-primary-900 mb-4">Similar Producers</h3>
                   <div className="space-y-3">
                     {[
-                      { name: "Mountain Spice Co.", avatar: "🌶️", location: "Matale", followers: 890, id: "mountain-spice-co" },
-                      { name: "Fresh Valley Farms", avatar: "🥬", location: "Kandy", followers: 675, id: "fresh-valley-farms" },
-                      { name: "Golden Grain Mills", avatar: "🌾", location: "Ampara", followers: 456, id: "golden-grain-mills" }
+                      { name: "Mountain Spice Co.", avatar: "🌶️", location: "Matale", connections: 890, id: "mountain-spice-co" },
+                      { name: "Fresh Valley Farms", avatar: "🥬", location: "Kandy", connections: 675, id: "fresh-valley-farms" },
+                      { name: "Golden Grain Mills", avatar: "🌾", location: "Ampara", connections: 456, id: "golden-grain-mills" }
                     ].map((similar, index) => (
                       <div key={index} className="flex items-center justify-between cursor-pointer hover:bg-primary-50 p-2 rounded-lg transition-colors" onClick={() => navigate(`/producer/${similar.id}`)}>
                         <div className="flex items-center space-x-3">
@@ -679,7 +674,7 @@ const ProducerProfile = () => {
                           onClick={(e) => e.stopPropagation()}
                           className="text-orange-600 hover:text-orange-700 text-sm font-medium"
                         >
-                          Follow
+                          Connect
                         </button>
                       </div>
                     ))}

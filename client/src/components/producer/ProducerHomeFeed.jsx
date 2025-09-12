@@ -7,8 +7,7 @@ const ProducerHomeFeed = () => {
   const analytics = {
     views: 12500,
     likes: 4200,
-    followers: 850,
-    connections: 42
+    connections: 850
   }
 
   const activities = [
@@ -41,9 +40,9 @@ const ProducerHomeFeed = () => {
     },
     {
       id: 4,
-      type: 'follow',
+      type: 'connection',
       user: 'Healthy Foods Co.',
-      action: 'started following you',
+      action: 'connected with you',
       content: '',
       time: '1 day ago',
       avatar: 'HF'
@@ -98,7 +97,7 @@ const ProducerHomeFeed = () => {
       id: 1,
       name: 'Lanka Spice Producer',
       category: 'Spices',
-      followers: '2.1k',
+      connections: '2.1k',
       mutual: 8,
       avatar: 'LS'
     },
@@ -106,7 +105,7 @@ const ProducerHomeFeed = () => {
       id: 2,
       name: 'Hill Country Tea Estate',
       category: 'Tea',
-      followers: '5.3k',
+      connections: '5.3k',
       mutual: 15,
       avatar: 'HC'
     },
@@ -114,7 +113,7 @@ const ProducerHomeFeed = () => {
       id: 3,
       name: 'Organic Vegetable Farm',
       category: 'Vegetables',
-      followers: '1.8k',
+      connections: '1.8k',
       mutual: 6,
       avatar: 'OV'
     }
@@ -165,7 +164,7 @@ const ProducerHomeFeed = () => {
         {/* Left Column - Activity Feed */}
         <div className="lg:col-span-2 space-y-6">
           {/* Analytics Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-primary-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -198,26 +197,12 @@ const ProducerHomeFeed = () => {
             <div className="bg-white rounded-xl p-4 shadow-sm border border-primary-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-primary-600">Followers</p>
-                  <p className="text-2xl font-bold text-primary-900">{analytics.followers}</p>
-                </div>
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-primary-200">
-              <div className="flex items-center justify-between">
-                <div>
                   <p className="text-sm text-primary-600">Connections</p>
                   <p className="text-2xl font-bold text-primary-900">{analytics.connections}</p>
                 </div>
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 5a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 3a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" clipRule="evenodd" />
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                   </svg>
                 </div>
               </div>
@@ -338,7 +323,7 @@ const ProducerHomeFeed = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-medium text-primary-900">{producer.name}</h4>
-                    <p className="text-xs text-primary-500">{producer.category} • {producer.followers} followers</p>
+                    <p className="text-xs text-primary-500">{producer.category} • {producer.connections} connections</p>
                     <p className="text-xs text-primary-600">{producer.mutual} mutual connections</p>
                   </div>
                   <button className="px-3 py-1 bg-orange-100 text-orange-700 text-xs rounded-full hover:bg-orange-200 transition-colors">

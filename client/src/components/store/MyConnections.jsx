@@ -13,7 +13,7 @@ const MyConnections = () => {
       avatar: "HT",
       category: "Tea & Spices",
       location: "Nuwara Eliya",
-      followers: 2450,
+      connections: 2450,
       connectionDate: "2024-08-15",
       status: "active",
       verified: true,
@@ -30,7 +30,7 @@ const MyConnections = () => {
       avatar: "OV",
       category: "Vegetables",
       location: "Anuradhapura",
-      followers: 1850,
+      connections: 1850,
       connectionDate: "2024-07-20",
       status: "active",
       verified: true,
@@ -47,7 +47,7 @@ const MyConnections = () => {
       avatar: "SG",
       category: "Spices",
       location: "Matale",
-      followers: 3200,
+      connections: 3200,
       connectionDate: "2024-06-10",
       status: "active",
       verified: true,
@@ -64,7 +64,7 @@ const MyConnections = () => {
       avatar: "CP",
       category: "Coconut Products",
       location: "Kurunegala",
-      followers: 1200,
+      connections: 1200,
       connectionDate: "2024-05-25",
       status: "inactive",
       verified: false,
@@ -81,7 +81,7 @@ const MyConnections = () => {
       avatar: "FF",
       category: "Tropical Fruits",
       location: "Gampaha",
-      followers: 980,
+      connections: 980,
       connectionDate: "2024-09-01",
       status: "active",
       verified: true,
@@ -165,8 +165,8 @@ const MyConnections = () => {
             {!isListView && (
               <>
                 <div className="text-center">
-                  <p className="text-sm font-semibold text-primary-900">{connection.followers}</p>
-                  <p className="text-xs text-primary-500">Followers</p>
+                  <p className="text-sm font-semibold text-primary-900">{connection.connections}</p>
+                  <p className="text-xs text-primary-500">Connections</p>
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-semibold text-primary-900">{connection.rating}</p>
@@ -179,8 +179,8 @@ const MyConnections = () => {
           {isListView && (
             <>
               <div className="text-center">
-                <p className="text-sm font-semibold text-primary-900">{connection.followers}</p>
-                <p className="text-xs text-primary-500">Followers</p>
+                <p className="text-sm font-semibold text-primary-900">{connection.connections}</p>
+                <p className="text-xs text-primary-500">Connections</p>
               </div>
               <div className="text-center">
                 <p className="text-sm font-semibold text-primary-900">{connection.rating}</p>

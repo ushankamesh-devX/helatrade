@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const ProducerRecommendations = () => {
   const navigate = useNavigate();
-  const [followedProducers, setFollowedProducers] = useState(new Set());
+  const [connectedProducers, setConnectedProducers] = useState(new Set());
 
   const recommendedProducers = [
     {
@@ -13,7 +13,7 @@ const ProducerRecommendations = () => {
       location: "Nuwara Eliya",
       verified: true,
       specialties: ["Tea", "Coffee"],
-      followers: 1240,
+      connections: 1240,
       posts: 89,
       rating: 4.8,
       description: "Premium Ceylon tea direct from high-altitude plantations"
@@ -25,7 +25,7 @@ const ProducerRecommendations = () => {
       location: "Matale",
       verified: true,
       specialties: ["Spices", "Herbs"],
-      followers: 890,
+      connections: 890,
       posts: 67,
       rating: 4.9,
       description: "Authentic Sri Lankan spices with organic certification"
@@ -37,7 +37,7 @@ const ProducerRecommendations = () => {
       location: "Kandy",
       verified: true,
       specialties: ["Vegetables", "Fruits"],
-      followers: 675,
+      connections: 675,
       posts: 134,
       rating: 4.7,
       description: "Farm-fresh organic produce delivered daily"
@@ -49,7 +49,7 @@ const ProducerRecommendations = () => {
       location: "Ampara",
       verified: false,
       specialties: ["Rice", "Grains"],
-      followers: 456,
+      connections: 456,
       posts: 45,
       rating: 4.6,
       description: "Quality rice and grain processing since 1990"
@@ -61,21 +61,21 @@ const ProducerRecommendations = () => {
       location: "Colombo",
       verified: true,
       specialties: ["Coconut Products"],
-      followers: 234,
+      connections: 234,
       posts: 28,
       rating: 4.5,
       description: "Premium coconut products for export markets"
     }
   ];
 
-  const handleFollow = (producerId) => {
-    const newFollowedProducers = new Set(followedProducers);
-    if (newFollowedProducers.has(producerId)) {
-      newFollowedProducers.delete(producerId);
+  const handleConnect = (producerId) => {
+    const newConnectedProducers = new Set(connectedProducers);
+    if (newConnectedProducers.has(producerId)) {
+      newConnectedProducers.delete(producerId);
     } else {
-      newFollowedProducers.add(producerId);
+      newConnectedProducers.add(producerId);
     }
-    setFollowedProducers(newFollowedProducers);
+    setConnectedProducers(newConnectedProducers);
   };
 
   return (
@@ -112,8 +112,8 @@ const ProducerRecommendations = () => {
                   
                   <div className="grid grid-cols-3 gap-2 text-xs text-primary-500 mb-3">
                     <div className="text-center">
-                      <div className="font-medium text-primary-700">{producer.followers}</div>
-                      <div>followers</div>
+                      <div className="font-medium text-primary-700">{producer.connections}</div>
+                      <div>connections</div>
                     </div>
                     <div className="text-center">
                       <div className="font-medium text-primary-700">{producer.posts}</div>
@@ -141,15 +141,15 @@ const ProducerRecommendations = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleFollow(producer.id);
+                      handleConnect(producer.id);
                     }}
                     className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                      followedProducers.has(producer.id)
+                      connectedProducers.has(producer.id)
                         ? 'bg-green-100 text-green-700 border border-green-200'
                         : 'bg-orange-600 text-white hover:bg-orange-700'
                     }`}
                   >
-                    {followedProducers.has(producer.id) ? 'Following ✓' : 'Follow'}
+                    {connectedProducers.has(producer.id) ? 'Connected ✓' : 'Connect'}
                   </button>
                 </div>
               </div>
@@ -181,9 +181,9 @@ const ProducerRecommendations = () => {
         </div>
       </div>
 
-      {/* Who to Follow */}
+      {/* Who to Connect */}
       <div className="bg-white rounded-lg border border-primary-200 p-6">
-        <h3 className="text-lg font-semibold text-primary-900 mb-4">Who to Follow</h3>
+        <h3 className="text-lg font-semibold text-primary-900 mb-4">Who to Connect</h3>
         <div className="space-y-3">
           {recommendedProducers.slice(3, 5).map((producer) => (
             <div key={producer.id} className="flex items-center justify-between cursor-pointer hover:bg-primary-50 p-2 rounded-lg transition-colors" onClick={() => navigate(`/producer/${producer.id}`)}>
@@ -206,15 +206,15 @@ const ProducerRecommendations = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleFollow(producer.id);
+                  handleConnect(producer.id);
                 }}
                 className={`py-1 px-3 rounded-lg text-xs font-medium transition-colors ${
-                  followedProducers.has(producer.id)
+                  connectedProducers.has(producer.id)
                     ? 'bg-green-100 text-green-700'
                     : 'bg-orange-600 text-white hover:bg-orange-700'
                 }`}
               >
-                {followedProducers.has(producer.id) ? 'Following' : 'Follow'}
+                {connectedProducers.has(producer.id) ? 'Connected' : 'Connect'}
               </button>
             </div>
           ))}
