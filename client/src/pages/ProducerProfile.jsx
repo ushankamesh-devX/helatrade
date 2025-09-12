@@ -4,6 +4,7 @@ import Header from '../components/ui/Header';
 import Footer from '../components/ui/Footer';
 import PostCard from '../components/ui/PostCard';
 import ProductCard from '../components/ui/ProductCard';
+import { useCategories } from '../hooks/useCategories';
 
 const ProducerProfile = () => {
   const { producerId } = useParams();
@@ -12,6 +13,35 @@ const ProducerProfile = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [savedPosts, setSavedPosts] = useState(new Set());
+
+  // Get categories from API to map IDs to names
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories()
+  
+  // Transform categories for display
+  const categories = React.useMemo(() => {
+    if (categoriesLoading || !apiCategories.length) {
+      // Fallback categories while loading or if API fails
+      return [
+        { id: 'vegetables', name: 'Vegetables', icon: '🥬' },
+        { id: 'fruits', name: 'Fruits', icon: '🍎' },
+        { id: 'grains', name: 'Grains & Rice', icon: '🌾' },
+        { id: 'spices', name: 'Spices', icon: '🌶️' },
+        { id: 'tea', name: 'Tea', icon: '🍃' },
+        { id: 'coconut', name: 'Coconut Products', icon: '🥥' },
+        { id: 'dairy', name: 'Dairy', icon: '🐄' },
+        { id: 'seafood', name: 'Seafood', icon: '🐟' },
+        { id: 'herbs', name: 'Herbs', icon: '🌿' },
+        { id: 'flowers', name: 'Flowers', icon: '🌺' }
+      ]
+    }
+    
+    // Transform API categories to match expected format
+    return apiCategories.map(cat => ({
+      id: cat.slug,
+      name: cat.name,
+      icon: cat.icon
+    }))
+  }, [apiCategories, categoriesLoading])
 
   const handleConnect = () => {
     setIsConnected(!isConnected);
@@ -69,6 +99,7 @@ const ProducerProfile = () => {
     likes: 8950,
     joinedDate: "March 2022",
     foundedYear: 1972,
+    selectedCategories: ['tea', 'herbs', 'spices'], // Changed from single category to multiple categories
     
     // Business Details
     businessType: "Family-owned Tea Estate",
@@ -273,6 +304,12 @@ const ProducerProfile = () => {
                         </svg>
                         {producer.location}
                       </span>
+                      <span>•</span>
+                      <span>{producer.selectedCategories.length > 0 ? 
+                        producer.selectedCategories.map(catId => 
+                          categories.find(cat => cat.id === catId)?.name || catId
+                        ).join(', ') : 'No categories'}</span>
+                      <span>•</span>
                       <span>Joined {producer.joinedDate}</span>
                     </div>
                   </div>
