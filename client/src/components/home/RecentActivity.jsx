@@ -109,7 +109,7 @@ const RecentActivity = () => {
 
   return (
     <section className="py-16 bg-gray-50">
-      <div className="max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-12">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary-800 mb-4">

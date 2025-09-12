@@ -127,7 +127,7 @@ const Statistics = () => {
         }}></div>
       </div>
 
-      <div className="relative max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">

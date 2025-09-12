@@ -17,7 +17,7 @@ const Hero = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-white via-orange-50 to-yellow-50"></div>
       </div>
       
-      <div className="relative max-w-7xlxx mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <div className="relative max-w-7xlxxx mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="text-primary-800">
