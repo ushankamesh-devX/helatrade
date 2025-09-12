@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useCategories } from '../../hooks/useCategories'
 
 const ProductsSection = () => {
   const [showAddProduct, setShowAddProduct] = useState(false)
@@ -88,7 +89,20 @@ const ProductsSection = () => {
     }
   ]
 
-  const categories = ['All Categories', 'Tea', 'Spices', 'Vegetables', 'Fruits', 'Coconut Products', 'Other']
+  // Get categories from API
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories()
+  
+  // Transform categories for dropdown (add "All Categories" option)
+  const categories = React.useMemo(() => {
+    if (categoriesLoading || !apiCategories.length) {
+      // Fallback categories while loading or if API fails
+      return ['All Categories', 'Tea', 'Spices', 'Vegetables', 'Fruits', 'Coconut Products', 'Other']
+    }
+    
+    const categoryNames = ['All Categories', ...apiCategories.map(cat => cat.name), 'Other']
+    return categoryNames
+  }, [apiCategories, categoriesLoading])
+
   const units = ['per kg', 'per liter', 'per piece', 'per bundle', 'per box']
   const availabilityOptions = [
     { value: 'in-stock', label: 'In Stock', color: 'green' },

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useCategories } from '../../hooks/useCategories'
 
 const ContentManagement = () => {
   const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
@@ -85,7 +86,19 @@ const ContentManagement = () => {
     { value: 'least_engaged', label: 'Least Engaged' }
   ]
 
-  const categories = ['All Categories', 'Vegetables', 'Spices', 'Tea', 'Fruits', 'Coconut Products']
+  // Get categories from API
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories()
+  
+  // Transform categories for filtering (add "All Categories" option)
+  const categories = React.useMemo(() => {
+    if (categoriesLoading || !apiCategories.length) {
+      // Fallback categories while loading or if API fails
+      return ['All Categories', 'Vegetables', 'Spices', 'Tea', 'Fruits', 'Coconut Products']
+    }
+    
+    const categoryNames = ['All Categories', ...apiCategories.map(cat => cat.name)]
+    return categoryNames
+  }, [apiCategories, categoriesLoading])
 
   const filteredPosts = posts.filter(post => {
     if (filterBy === 'all') return true

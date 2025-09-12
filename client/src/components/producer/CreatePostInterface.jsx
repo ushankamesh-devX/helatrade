@@ -1,6 +1,9 @@
-import React, { useState, useRef } from 'react'
+// import React, { useState, useRef } from 'react'
 
-const CreatePostInterface = () => {
+import React, { useState, useRef } from 'react'
+import { useCategories } from '../../hooks/useCategories'
+
+const CreatePostInterface = ({ onClose, onSubmit }) => {
   const [postData, setPostData] = useState({
     content: '',
     category: '',
@@ -18,10 +21,28 @@ const CreatePostInterface = () => {
   const [isDragOver, setIsDragOver] = useState(false)
   const fileInputRef = useRef(null)
 
-  const categories = [
-    'Agriculture', 'Tea', 'Spices', 'Vegetables', 'Fruits', 
-    'Organic Products', 'Export Quality', 'Coconut Products'
-  ]
+  // Get categories from API
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories()
+  
+  // Transform categories for post categorization
+  const categories = React.useMemo(() => {
+    if (categoriesLoading || !apiCategories.length) {
+      // Fallback categories while loading or if API fails
+      return [
+        'Agriculture', 'Tea', 'Spices', 'Vegetables', 'Fruits', 
+        'Organic Products', 'Export Quality', 'Coconut Products'
+      ]
+    }
+    
+    // Use API categories and add some additional post-specific ones
+    const categoryNames = [
+      ...apiCategories.map(cat => cat.name),
+      'Organic Products', 
+      'Export Quality'
+    ]
+    // Remove duplicates
+    return [...new Set(categoryNames)]
+  }, [apiCategories, categoriesLoading])
 
   const visibilityOptions = [
     { value: 'public', label: 'Public', icon: '🌍', description: 'Anyone can see this post' },

@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCategories } from '../hooks/useCategories';
 
 const ProducerWelcome = () => {
   const navigate = useNavigate()
@@ -14,14 +15,30 @@ const ProducerWelcome = () => {
     location: ''
   })
 
-  const categories = [
-    { id: 'vegetables', name: 'Vegetables', icon: '🥬' },
-    { id: 'fruits', name: 'Fruits', icon: '🍎' },
-    { id: 'grains', name: 'Grains & Rice', icon: '🌾' },
-    { id: 'spices', name: 'Spices', icon: '🌶️' },
-    { id: 'tea', name: 'Tea', icon: '🍃' },
-    { id: 'coconut', name: 'Coconut Products', icon: '🥥' }
-  ]
+  // Get categories from API
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories()
+  
+  // Transform categories for welcome/preferences
+  const categories = React.useMemo(() => {
+    if (categoriesLoading || !apiCategories.length) {
+      // Fallback categories while loading or if API fails
+      return [
+        { id: 'vegetables', name: 'Vegetables', icon: '🥬' },
+        { id: 'fruits', name: 'Fruits', icon: '🍎' },
+        { id: 'grains', name: 'Grains & Rice', icon: '🌾' },
+        { id: 'spices', name: 'Spices', icon: '🌶️' },
+        { id: 'tea', name: 'Tea', icon: '🍃' },
+        { id: 'coconut', name: 'Coconut Products', icon: '🥥' }
+      ]
+    }
+    
+    // Transform API categories to match expected format
+    return apiCategories.map(cat => ({
+      id: cat.slug,
+      name: cat.name,
+      icon: cat.icon
+    }))
+  }, [apiCategories, categoriesLoading])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target

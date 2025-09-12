@@ -1,6 +1,9 @@
-import React, { useState, useRef } from 'react'
+// import React, { useState, useRef } from 'react'
 
-const EditProfile = () => {
+import React, { useState, useRef } from 'react'
+import { useCategories } from '../../hooks/useCategories'
+
+const EditProfile = ({ onClose, onSave }) => {
   const [profileData, setProfileData] = useState({
     name: 'John Doe',
     businessName: 'Highland Tea Estate',
@@ -42,10 +45,23 @@ const EditProfile = () => {
   const profileImageRef = useRef(null)
   const bannerImageRef = useRef(null)
 
-  const categories = [
-    'Tea', 'Spices', 'Vegetables', 'Fruits', 'Coconut Products', 
-    'Rice', 'Herbs', 'Flowers', 'Seafood', 'Dairy', 'Other'
-  ]
+  // Get categories from API
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories()
+  
+  // Transform categories for profile editing
+  const categories = React.useMemo(() => {
+    if (categoriesLoading || !apiCategories.length) {
+      // Fallback categories while loading or if API fails
+      return [
+        'Tea', 'Spices', 'Vegetables', 'Fruits', 'Coconut Products', 
+        'Rice', 'Herbs', 'Flowers', 'Seafood', 'Dairy', 'Other'
+      ]
+    }
+    
+    // Use API categories and add "Other" option
+    const categoryNames = [...apiCategories.map(cat => cat.name), 'Other']
+    return categoryNames
+  }, [apiCategories, categoriesLoading])
 
   const availableLanguages = [
     'English', 'Sinhala', 'Tamil', 'Arabic', 'Chinese', 'German', 

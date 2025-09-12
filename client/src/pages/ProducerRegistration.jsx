@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useCategories } from '../hooks/useCategories';
 
 const ProducerRegistration = () => {
   const navigate = useNavigate()
@@ -31,18 +32,34 @@ const ProducerRegistration = () => {
     verificationCode: ''
   })
 
-  const categories = [
-    { id: 'vegetables', name: 'Vegetables', icon: '🥬' },
-    { id: 'fruits', name: 'Fruits', icon: '🍎' },
-    { id: 'grains', name: 'Grains & Rice', icon: '🌾' },
-    { id: 'spices', name: 'Spices', icon: '🌶️' },
-    { id: 'tea', name: 'Tea', icon: '🍃' },
-    { id: 'coconut', name: 'Coconut Products', icon: '🥥' },
-    { id: 'dairy', name: 'Dairy', icon: '🐄' },
-    { id: 'seafood', name: 'Seafood', icon: '🐟' },
-    { id: 'herbs', name: 'Herbs', icon: '🌿' },
-    { id: 'flowers', name: 'Flowers', icon: '🌺' }
-  ]
+  // Get categories from API
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories()
+  
+  // Transform categories for registration (add id and maintain icon)
+  const categories = React.useMemo(() => {
+    if (categoriesLoading || !apiCategories.length) {
+      // Fallback categories while loading or if API fails
+      return [
+        { id: 'vegetables', name: 'Vegetables', icon: '🥬' },
+        { id: 'fruits', name: 'Fruits', icon: '🍎' },
+        { id: 'grains', name: 'Grains & Rice', icon: '🌾' },
+        { id: 'spices', name: 'Spices', icon: '🌶️' },
+        { id: 'tea', name: 'Tea', icon: '🍃' },
+        { id: 'coconut', name: 'Coconut Products', icon: '🥥' },
+        { id: 'dairy', name: 'Dairy', icon: '🐄' },
+        { id: 'seafood', name: 'Seafood', icon: '🐟' },
+        { id: 'herbs', name: 'Herbs', icon: '🌿' },
+        { id: 'flowers', name: 'Flowers', icon: '🌺' }
+      ]
+    }
+    
+    // Transform API categories to match expected format
+    return apiCategories.map(cat => ({
+      id: cat.slug,
+      name: cat.name,
+      icon: cat.icon
+    }))
+  }, [apiCategories, categoriesLoading])
 
   const provinces = [
     'Western', 'Central', 'Southern', 'Northern', 'Eastern', 
