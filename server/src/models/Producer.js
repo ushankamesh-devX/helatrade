@@ -1,6 +1,7 @@
 const { executeQuery, getOne, executeTransaction } = require('../config/database');
 const slugify = require('slugify');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcrypt');
 
 class Producer {
   constructor(data = {}) {
@@ -16,6 +17,7 @@ class Producer {
     this.businessType = data.business_type;
     this.foundedYear = data.founded_year;
     this.email = data.email;
+    this.passwordHash = data.password_hash;
     this.phone = data.phone;
     this.website = data.website;
     this.address = data.address;
@@ -170,7 +172,7 @@ class Producer {
   static async create(data) {
     const {
       name, bio, location, avatar, businessType, foundedYear,
-      email, phone, website, address, socialMedia = {},
+      email, password, phone, website, address, socialMedia = {},
       contact = {}, // Add contact object support
       categories = [], specialties = [], certifications = [],
       languages = [], businessHours = {}
@@ -181,6 +183,13 @@ class Producer {
     const producerPhone = phone || contact.phone;
     const producerWebsite = website || contact.website;
     const producerAddress = address || contact.address;
+
+    // Hash password if provided
+    let passwordHash = null;
+    if (password) {
+      const saltRounds = 12;
+      passwordHash = await bcrypt.hash(password, saltRounds);
+    }
 
     // Generate UUID for the producer
     const producerId = uuidv4();
@@ -201,13 +210,13 @@ class Producer {
         query: `
           INSERT INTO producers (
             id, slug, name, bio, location, avatar, business_type, founded_year,
-            email, phone, website, address, facebook_url, instagram_url,
+            email, password_hash, phone, website, address, facebook_url, instagram_url,
             twitter_url, linkedin_url, youtube_url
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         params: [
           producerId, slug, name, bio || null, location || null, avatar || null, businessType || null, foundedYear || null,
-          producerEmail || null, producerPhone || null, producerWebsite || null, producerAddress || null,
+          producerEmail || null, passwordHash, producerPhone || null, producerWebsite || null, producerAddress || null,
           socialMedia.facebook || null, socialMedia.instagram || null, socialMedia.twitter || null,
           socialMedia.linkedin || null, socialMedia.youtube || null
         ]
@@ -324,6 +333,57 @@ class Producer {
     const query = 'UPDATE producers SET status = "inactive", updated_at = CURRENT_TIMESTAMP WHERE id = ?';
     const result = await executeQuery(query, [id]);
     return result.affectedRows > 0;
+  }
+
+  /**
+   * Authenticate producer login
+   */
+  static async authenticate(email, password) {
+    const query = 'SELECT * FROM producers WHERE email = ? AND status IN ("active", "pending")';
+    const producerData = await getOne(query, [email]);
+    
+    if (!producerData) {
+      return null;
+    }
+
+    const isValidPassword = await bcrypt.compare(password, producerData.password_hash);
+    if (!isValidPassword) {
+      return null;
+    }
+
+    const producer = new Producer(producerData);
+    
+    // Load related data
+    await Promise.all([
+      producer._loadCategories(),
+      producer._loadSpecialties(),
+      producer._loadCertifications(),
+      producer._loadLanguages(),
+      producer._loadBusinessHours()
+    ]);
+
+    return producer;
+  }
+
+  /**
+   * Update producer password
+   */
+  static async updatePassword(id, currentPassword, newPassword) {
+    const producer = await this.getByIdOrSlug(id);
+    if (!producer) {
+      throw new Error('Producer not found');
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, producer.passwordHash);
+    if (!isValidPassword) {
+      throw new Error('Current password is incorrect');
+    }
+
+    const saltRounds = 12;
+    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+    const query = 'UPDATE producers SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    await executeQuery(query, [newPasswordHash, id]);
   }
 
 

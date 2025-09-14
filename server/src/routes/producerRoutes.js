@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const ProducerController = require('../controllers/producerController');
+const AuthMiddleware = require('../middleware/auth');
+const { body } = require('express-validator');
 const {
   validateCreateProducer,
   validateUpdateProducer,
@@ -24,7 +26,119 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
+// Validation rules for producer registration
+const registerValidation = [
+  body('name')
+    .notEmpty()
+    .withMessage('Producer name is required')
+    .isLength({ min: 2, max: 255 })
+    .withMessage('Producer name must be between 2 and 255 characters')
+    .trim()
+    .escape(),
+  
+  body('email')
+    .isEmail()
+    .withMessage('Valid email is required')
+    .normalizeEmail(),
+  
+  body('password')
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
+  
+  body('location')
+    .optional()
+    .isLength({ max: 255 })
+    .withMessage('Location must not exceed 255 characters')
+    .trim()
+    .escape(),
+  
+  body('phone')
+    .optional()
+    .isMobilePhone('any')
+    .withMessage('Invalid phone number format'),
+  
+  body('businessType')
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage('Business type must not exceed 100 characters')
+    .trim()
+    .escape()
+];
+
+// Validation rules for producer login
+const loginValidation = [
+  body('email')
+    .isEmail()
+    .withMessage('Valid email is required')
+    .normalizeEmail(),
+  
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+];
+
+// Validation rules for password update
+const passwordUpdateValidation = [
+  body('currentPassword')
+    .notEmpty()
+    .withMessage('Current password is required'),
+  
+  body('newPassword')
+    .isLength({ min: 8 })
+    .withMessage('New password must be at least 8 characters long')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number'),
+  
+  body('confirmPassword')
+    .custom((value, { req }) => {
+      if (value !== req.body.newPassword) {
+        throw new Error('Password confirmation does not match');
+      }
+      return true;
+    })
+];
+
 // Producer CRUD routes
+
+// Authentication routes (must come first to avoid conflicts with /:identifier)
+
+/**
+ * @route   POST /api/producers/register
+ * @desc    Register a new producer
+ * @access  Public
+ */
+router.post('/register',
+  registerValidation,
+  handleValidationErrors,
+  ProducerController.register
+);
+
+/**
+ * @route   POST /api/producers/login
+ * @desc    Producer login
+ * @access  Public
+ */
+router.post('/login',
+  loginValidation,
+  handleValidationErrors,
+  ProducerController.login
+);
+
+/**
+ * @route   PUT /api/producers/password
+ * @desc    Update producer password
+ * @access  Private (Producer)
+ */
+router.put('/password',
+  AuthMiddleware.authenticateProducer,
+  passwordUpdateValidation,
+  handleValidationErrors,
+  ProducerController.updatePassword
+);
+
+// Public routes
 
 /**
  * @route   GET /api/producers
@@ -75,7 +189,7 @@ router.get('/:identifier',
 
 /**
  * @route   POST /api/producers
- * @desc    Create new producer
+ * @desc    Create new producer (legacy endpoint - use /register instead)
  * @access  Private (Authenticated users)
  */
 router.post('/',
@@ -91,7 +205,7 @@ router.post('/',
  * @access  Private (Producer owner or Admin)
  */
 router.put('/:id',
-  requireAuth,
+  AuthMiddleware.authenticateProducer,
   validateUpdateProducer,
   handleValidationErrors,
   ProducerController.update
@@ -103,7 +217,7 @@ router.put('/:id',
  * @access  Private (Producer owner or Admin)
  */
 router.delete('/:id',
-  requireAuth,
+  AuthMiddleware.authenticateProducer,
   validateUpdateProducer, // Using update validation for ID validation
   handleValidationErrors,
   ProducerController.delete

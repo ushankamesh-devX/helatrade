@@ -9,6 +9,153 @@ All endpoints are prefixed with `/api/producers`
 ## Authentication
 Most endpoints require authentication. Public endpoints are marked as such.
 
+### JWT Token Usage
+After successful login or registration, include the JWT token in the Authorization header:
+```
+Authorization: Bearer <jwt_token>
+```
+
+### Password Requirements
+- Minimum 8 characters
+- At least one lowercase letter
+- At least one uppercase letter  
+- At least one number
+
+---
+
+## Authentication Endpoints
+
+### 1. Producer Registration
+```
+POST /api/producers/register
+```
+**Public**: Yes  
+**Request Body**:
+```json
+{
+  "name": "Highland Tea Estate",
+  "email": "info@highlandtea.lk",
+  "password": "SecurePassword123",
+  "location": "Nuwara Eliya, Sri Lanka",
+  "phone": "+94 777 123 456",
+  "businessType": "Family-owned Tea Estate",
+  "bio": "Premium Ceylon tea direct from high-altitude plantations...",
+  "avatar": "🍃",
+  "categories": [1, 2, 3], // Category IDs
+  "specialties": ["Ceylon Black Tea", "Green Tea"],
+  "certifications": ["Organic Certification"],
+  "languages": [
+    { "language": "English", "proficiency": "advanced" }
+  ],
+  "businessHours": {
+    "monday": { "isOpen": true, "openTime": "08:00", "closeTime": "17:00" }
+  },
+  "socialMedia": {
+    "facebook": "https://facebook.com/highlandteaestate",
+    "instagram": "https://instagram.com/highland_tea_estate"
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "slug": "highland-tea-estate",
+    "name": "Highland Tea Estate",
+    "email": "info@highlandtea.lk",
+    "verified": false,
+    "status": "pending",
+    "location": "Nuwara Eliya, Sri Lanka",
+    "businessType": "Family-owned Tea Estate",
+    "avatar": "🍃",
+    "contact": {
+      "email": "info@highlandtea.lk",
+      "phone": "+94 777 123 456"
+    },
+    "socialMedia": {
+      "facebook": "https://facebook.com/highlandteaestate",
+      "instagram": "https://instagram.com/highland_tea_estate"
+    },
+    "categories": [...],
+    "specialties": [...],
+    "certifications": [...],
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z"
+  },
+  "token": "jwt_token_string",
+  "message": "Producer registered successfully"
+}
+```
+
+### 2. Producer Login
+```
+POST /api/producers/login
+```
+**Public**: Yes  
+**Request Body**:
+```json
+{
+  "email": "info@highlandtea.lk",
+  "password": "SecurePassword123"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "slug": "highland-tea-estate", 
+    "name": "Highland Tea Estate",
+    "email": "info@highlandtea.lk",
+    "verified": false,
+    "status": "active",
+    "location": "Nuwara Eliya, Sri Lanka",
+    "businessType": "Family-owned Tea Estate",
+    "avatar": "🍃",
+    "contact": {
+      "email": "info@highlandtea.lk",
+      "phone": "+94 777 123 456"
+    },
+    "socialMedia": {
+      "facebook": "https://facebook.com/highlandteaestate",
+      "instagram": "https://instagram.com/highland_tea_estate"
+    },
+    "categories": [...],
+    "specialties": [...],
+    "certifications": [...]
+  },
+  "token": "jwt_token_string",
+  "message": "Login successful"
+}
+```
+
+### 3. Update Password
+```
+PUT /api/producers/password
+```
+**Authentication**: Required (Producer only)  
+**Request Body**:
+```json
+{
+  "currentPassword": "CurrentPassword123",
+  "newPassword": "NewSecurePassword123",
+  "confirmPassword": "NewSecurePassword123"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Password updated successfully"
+}
+```
+
 ---
 
 ## Producer CRUD Operations
@@ -103,11 +250,13 @@ GET /api/producers/:identifier
 }
 ```
 
-### 3. Create Producer
+### 3. Create Producer (Legacy)
 ```
 POST /api/producers
 ```
 **Authentication**: Required  
+**Note**: This is a legacy endpoint. Use `/api/producers/register` for new producer registration with authentication.
+
 **Request Body**:
 ```json
 {
