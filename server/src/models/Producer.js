@@ -1,5 +1,6 @@
 const { executeQuery, getOne, executeTransaction } = require('../config/database');
 const slugify = require('slugify');
+const { v4: uuidv4 } = require('uuid');
 
 class Producer {
   constructor(data = {}) {
@@ -170,9 +171,19 @@ class Producer {
     const {
       name, bio, location, avatar, businessType, foundedYear,
       email, phone, website, address, socialMedia = {},
+      contact = {}, // Add contact object support
       categories = [], specialties = [], certifications = [],
       languages = [], businessHours = {}
     } = data;
+
+    // Extract contact information from nested object if provided
+    const producerEmail = email || contact.email;
+    const producerPhone = phone || contact.phone;
+    const producerWebsite = website || contact.website;
+    const producerAddress = address || contact.address;
+
+    // Generate UUID for the producer
+    const producerId = uuidv4();
 
     // Generate slug from name
     const baseSlug = slugify(name, { lower: true, strict: true });
@@ -189,22 +200,21 @@ class Producer {
       {
         query: `
           INSERT INTO producers (
-            slug, name, bio, location, avatar, business_type, founded_year,
+            id, slug, name, bio, location, avatar, business_type, founded_year,
             email, phone, website, address, facebook_url, instagram_url,
             twitter_url, linkedin_url, youtube_url
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         params: [
-          slug, name, bio, location, avatar, businessType, foundedYear,
-          email, phone, website, address,
-          socialMedia.facebook, socialMedia.instagram, socialMedia.twitter,
-          socialMedia.linkedin, socialMedia.youtube
+          producerId, slug, name, bio || null, location || null, avatar || null, businessType || null, foundedYear || null,
+          producerEmail || null, producerPhone || null, producerWebsite || null, producerAddress || null,
+          socialMedia.facebook || null, socialMedia.instagram || null, socialMedia.twitter || null,
+          socialMedia.linkedin || null, socialMedia.youtube || null
         ]
       }
     ];
 
-    const [result] = await executeTransaction(queries);
-    const producerId = result.insertId;
+    await executeTransaction(queries);
 
     // Insert related data
     await Promise.all([
@@ -215,7 +225,24 @@ class Producer {
       this._insertBusinessHours(producerId, businessHours)
     ]);
 
-    return await this.getByIdOrSlug(producerId);
+    // Return the created producer directly with a manual query to ensure it exists
+    const producerData = await getOne('SELECT * FROM producers WHERE id = ?', [producerId]);
+    if (!producerData) {
+      throw new Error('Producer was not created successfully');
+    }
+
+    const producer = new Producer(producerData);
+    
+    // Load related data
+    await Promise.all([
+      producer._loadCategories(),
+      producer._loadSpecialties(),
+      producer._loadCertifications(),
+      producer._loadLanguages(),
+      producer._loadBusinessHours()
+    ]);
+
+    return producer;
   }
 
   /**
@@ -456,7 +483,7 @@ class Producer {
     const values = Object.entries(businessHours).map(([day, hours]) => [
       producerId,
       day,
-      hours.isOpen,
+      hours.isOpen !== undefined ? hours.isOpen : true,
       hours.openTime || null,
       hours.closeTime || null
     ]);

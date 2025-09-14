@@ -25,13 +25,27 @@ const apiRequest = async (endpoint, options = {}) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+      // Create a more detailed error object
+      const error = new Error(data.message || `HTTP error! status: ${response.status}`);
+      error.status = response.status;
+      error.data = data;
+      throw error;
     }
 
     return data;
   } catch (error) {
     console.error('API request failed:', error);
-    throw error;
+    
+    // If it's already our custom error, re-throw it
+    if (error.status) {
+      throw error;
+    }
+    
+    // Otherwise, wrap it in a generic error
+    const wrappedError = new Error('Network error occurred');
+    wrappedError.status = 0;
+    wrappedError.originalError = error;
+    throw wrappedError;
   }
 };
 
@@ -80,6 +94,14 @@ export const categoriesAPI = {
 
 // Producers API
 export const producersAPI = {
+  // Producer Registration
+  register: async (producerData) => {
+    return apiRequest('/producers', {
+      method: 'POST',
+      body: JSON.stringify(producerData),
+    });
+  },
+
   // Get all producers
   getAll: async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
