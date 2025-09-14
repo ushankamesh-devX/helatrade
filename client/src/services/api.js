@@ -188,4 +188,114 @@ export const producersAPI = {
   },
 };
 
+// Stores API
+export const storesAPI = {
+  // Store Registration & Authentication
+  register: async (storeData) => {
+    return apiRequest('/stores/register', {
+      method: 'POST',
+      body: JSON.stringify(storeData),
+    });
+  },
+
+  login: async (credentials) => {
+    return apiRequest('/stores/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+
+  // Store Profile Management
+  getProfile: async (token) => {
+    return apiRequest('/stores/profile', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  },
+
+  updateProfile: async (token, profileData) => {
+    return apiRequest('/stores/profile', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  updatePassword: async (token, passwordData) => {
+    return apiRequest('/stores/password', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(passwordData),
+    });
+  },
+
+  // Store Connections
+  getConnections: async (token, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/stores/connections?${queryString}` : '/stores/connections';
+    return apiRequest(endpoint, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  },
+
+  connectWithProducer: async (token, producerId, connectionData) => {
+    return apiRequest(`/stores/connections/${producerId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(connectionData),
+    });
+  },
+
+  updateConnection: async (token, producerId, connectionData) => {
+    return apiRequest(`/stores/connections/${producerId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(connectionData),
+    });
+  },
+
+  removeConnection: async (token, producerId) => {
+    return apiRequest(`/stores/connections/${producerId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  },
+
+  // Public Store APIs
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/stores?${queryString}` : '/stores';
+    return apiRequest(endpoint);
+  },
+
+  getById: async (identifier) => {
+    return apiRequest(`/stores/${identifier}`);
+  },
+
+  search: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/stores/search?${queryString}` : '/stores/search';
+    return apiRequest(endpoint);
+  },
+
+  getFeatured: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/stores/featured?${queryString}` : '/stores/featured';
+    return apiRequest(endpoint);
+  },
+};
+
 export default apiRequest;

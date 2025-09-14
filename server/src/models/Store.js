@@ -1,6 +1,7 @@
-const { executeQuery, getOne, executeTransaction } = require('../config/database');
+const { executeQuery, getOne, executeTransaction, pool } = require('../config/database');
 const bcrypt = require('bcrypt');
 const slugify = require('slugify');
+const { v4: uuidv4 } = require('uuid');
 
 class Store {
   constructor(data = {}) {
@@ -70,36 +71,57 @@ class Store {
       counter++;
     }
 
-    const queries = [
-      {
-        query: `
-          INSERT INTO stores (
-            slug, owner_name, store_name, store_description, business_type,
-            business_focus, email, password_hash, phone, website,
-            address, city, district, province, postal_code,
-            operating_hours, status
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-        `,
-        params: [
-          slug, ownerName, storeName, description, businessType,
-          businessFocus, email, passwordHash, phone, website,
-          location.address, location.city, location.district, 
-          location.province, location.postalCode,
-          JSON.stringify(operatingHours)
-        ]
-      }
-    ];
+    // Use a complete transaction for all operations
+    const connection = await pool.getConnection();
+    let storeId;
+    
+    try {
+      await connection.beginTransaction();
+      
+      // Generate UUID for the store
+      storeId = uuidv4();
+      
+      // Insert store first
+      const storeQuery = `
+        INSERT INTO stores (
+          id, slug, owner_name, store_name, store_description, business_type,
+          business_focus, email, password_hash, phone, website,
+          address, city, district, province, postal_code,
+          operating_hours, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+      `;
+      
+      const storeParams = [
+        storeId, slug, ownerName, storeName, description, businessType,
+        businessFocus, email, passwordHash, phone, website,
+        location.address, location.city, location.district, 
+        location.province, location.postalCode,
+        JSON.stringify(operatingHours)
+      ];
 
-    const [result] = await executeTransaction(queries);
-    const storeId = result.insertId;
+      await connection.execute(storeQuery, storeParams);
+      
+      console.log('Store created with ID:', storeId);
+      console.log('interestedCategories:', interestedCategories);
+      console.log('specialties:', specialties);
+      console.log('deliveryOptions:', deliveryOptions);
+      console.log('paymentMethods:', paymentMethods);
 
-    // Insert related data
-    await Promise.all([
-      this._insertCategories(storeId, interestedCategories),
-      this._insertSpecialties(storeId, specialties),
-      this._insertDeliveryOptions(storeId, deliveryOptions),
-      this._insertPaymentMethods(storeId, paymentMethods)
-    ]);
+      // Insert related data within the same transaction
+      await Promise.all([
+        this._insertCategoriesInTransaction(connection, storeId, interestedCategories),
+        this._insertSpecialtiesInTransaction(connection, storeId, specialties),
+        this._insertDeliveryOptionsInTransaction(connection, storeId, deliveryOptions),
+        this._insertPaymentMethodsInTransaction(connection, storeId, paymentMethods)
+      ]);
+      
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
 
     return await this.getByIdOrSlug(storeId);
   }
@@ -684,6 +706,99 @@ class Store {
     const json = this.toJSON();
     delete json.contact.email; // Remove email from public profile
     return json;
+  }
+
+  // Transaction-aware helper methods
+  static async _insertCategoriesInTransaction(connection, storeId, categories) {
+    if (!categories || categories.length === 0) return;
+
+    console.log('Inserting categories for store:', storeId, 'categories:', categories);
+
+    // Validate that all category IDs exist first
+    const categoryIds = categories.map(cat => typeof cat === 'object' ? cat.id : cat);
+    const uniqueIds = [...new Set(categoryIds)].filter(id => id != null);
+    
+    if (uniqueIds.length === 0) return;
+
+    // Check if categories exist
+    const checkPlaceholders = uniqueIds.map(() => '?').join(',');
+    const checkQuery = `SELECT id FROM categories WHERE id IN (${checkPlaceholders}) AND is_active = true`;
+    const [existingCategories] = await connection.execute(checkQuery, uniqueIds);
+    
+    const existingIds = existingCategories.map(cat => cat.id);
+    console.log('Existing category IDs:', existingIds);
+    
+    if (existingIds.length === 0) {
+      console.warn('No valid categories found for IDs:', uniqueIds);
+      return;
+    }
+
+    // Only insert valid categories
+    const validCategories = categories.filter(cat => {
+      const catId = typeof cat === 'object' ? cat.id : cat;
+      return existingIds.includes(catId);
+    });
+
+    if (validCategories.length === 0) return;
+
+    const values = validCategories.map(cat => [
+      storeId,
+      typeof cat === 'object' ? cat.id : cat,
+      typeof cat === 'object' ? cat.interestLevel || 'medium' : 'medium'
+    ]);
+    const insertPlaceholders = values.map(() => '(?, ?, ?)').join(', ');
+    const query = `INSERT INTO store_categories (store_id, category_id, interest_level) VALUES ${insertPlaceholders}`;
+    const flatParams = values.flat();
+    
+    await connection.execute(query, flatParams);
+  }
+
+  static async _insertSpecialtiesInTransaction(connection, storeId, specialties) {
+    if (!specialties || specialties.length === 0) return;
+
+    const values = specialties.map(spec => [
+      storeId,
+      typeof spec === 'string' ? spec : spec.name,
+      typeof spec === 'object' ? spec.priority || 'medium' : 'medium'
+    ]);
+    const placeholders = values.map(() => '(?, ?, ?)').join(', ');
+    const query = `INSERT INTO store_specialties (store_id, specialty, priority) VALUES ${placeholders}`;
+    const flatParams = values.flat();
+    
+    await connection.execute(query, flatParams);
+  }
+
+  static async _insertDeliveryOptionsInTransaction(connection, storeId, deliveryOptions) {
+    if (!deliveryOptions || deliveryOptions.length === 0) return;
+
+    const values = deliveryOptions.map(option => [
+      storeId,
+      option.type,
+      option.available !== undefined ? option.available : true,
+      option.cost || 0,
+      option.description || null
+    ]);
+    const placeholders = values.map(() => '(?, ?, ?, ?, ?)').join(', ');
+    const query = `INSERT INTO store_delivery_options (store_id, delivery_type, is_available, cost, description) VALUES ${placeholders}`;
+    const flatParams = values.flat();
+    
+    await connection.execute(query, flatParams);
+  }
+
+  static async _insertPaymentMethodsInTransaction(connection, storeId, paymentMethods) {
+    if (!paymentMethods || paymentMethods.length === 0) return;
+
+    const values = paymentMethods.map(method => [
+      storeId,
+      method.type,
+      method.available !== undefined ? method.available : true,
+      method.provider || null
+    ]);
+    const placeholders = values.map(() => '(?, ?, ?, ?)').join(', ');
+    const query = `INSERT INTO store_payment_methods (store_id, payment_type, is_available, provider) VALUES ${placeholders}`;
+    const flatParams = values.flat();
+    
+    await connection.execute(query, flatParams);
   }
 }
 

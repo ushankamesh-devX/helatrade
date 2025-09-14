@@ -1,36 +1,53 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCategories } from '../hooks/useCategories';
+import { storesAPI } from '../services/api';
 
 const StoreRegistration = () => {
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    // Step 1: Store Details
+    // Step 1: Store Details (Required fields)
+    ownerName: '',
     storeName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    
-    // Step 2: Business Info
     businessType: '',
-    logo: null,
+    
+    // Step 2: Contact & Location Info
+    phone: '',
+    website: '',
+    description: '',
+    businessFocus: '',
     location: {
       province: '',
       district: '',
       city: '',
-      address: ''
+      address: '',
+      postalCode: ''
     },
-    phone: '',
-    website: '',
-    description: '',
     
-    // Step 3: Interests
+    // Step 3: Categories & Specialties
     interestedCategories: [],
-    businessFocus: '',
+    specialties: [],
     
-    // Step 4: Find Producers
+    // Step 4: Operations Setup
+    deliveryOptions: [
+      { type: 'pickup', available: true, cost: 0 },
+      { type: 'local_delivery', available: false, cost: 0 }
+    ],
+    paymentMethods: [
+      { type: 'cash', available: true },
+      { type: 'card', available: false, provider: '' }
+    ],
+    operatingHours: {
+      weekdays: '',
+      weekends: ''
+    },
+    
+    // Additional fields
     selectedProducers: [],
     connectWithAll: false
   })
@@ -50,24 +67,23 @@ const StoreRegistration = () => {
   // Transform categories for store registration
   const categories = React.useMemo(() => {
     if (categoriesLoading || !apiCategories.length) {
-      // Fallback categories while loading or if API fails
+      // Fallback categories while loading or if API fails - matching database categories_schema.sql
       return [
-        { id: 'vegetables', name: 'Vegetables', icon: '🥬' },
-        { id: 'fruits', name: 'Fruits', icon: '🍎' },
-        { id: 'grains', name: 'Grains & Rice', icon: '🌾' },
-        { id: 'spices', name: 'Spices', icon: '🌶️' },
-        { id: 'tea', name: 'Tea', icon: '🍃' },
-        { id: 'coconut', name: 'Coconut Products', icon: '🥥' },
-        { id: 'dairy', name: 'Dairy', icon: '🐄' },
-        { id: 'seafood', name: 'Seafood', icon: '🐟' },
-        { id: 'herbs', name: 'Herbs', icon: '🌿' },
-        { id: 'flowers', name: 'Flowers', icon: '🌺' }
+        { id: 1, name: 'Vegetables', icon: '�' },
+        { id: 2, name: 'Spices & Herbs', icon: '�️' },
+        { id: 3, name: 'Fruits', icon: '🥭' },
+        { id: 4, name: 'Dairy Products', icon: '🥛' },
+        { id: 5, name: 'Seafood', icon: '🐟' },
+        { id: 6, name: 'Rice & Grains', icon: '🌾' },
+        { id: 7, name: 'Tea & Beverages', icon: '🍃' },
+        { id: 8, name: 'Processed Foods', icon: '🍯' },
+        { id: 9, name: 'Coconut Products', icon: '🥥' }
       ]
     }
     
-    // Transform API categories to match expected format
+    // Use API categories as they are
     return apiCategories.map(cat => ({
-      id: cat.slug,
+      id: cat.id,
       name: cat.name,
       icon: cat.icon
     }))
@@ -127,14 +143,14 @@ const StoreRegistration = () => {
   ]
 
   const steps = [
-    { number: 1, title: 'Store Details', description: 'Basic information' },
-    { number: 2, title: 'Business Info', description: 'Location and contact' },
-    { number: 3, title: 'Interests', description: 'What you want to buy' },
-    { number: 4, title: 'Connect', description: 'Find producers' }
+    { number: 1, title: 'Store Details', description: 'Basic information and credentials' },
+    { number: 2, title: 'Contact & Location', description: 'Contact details and location' },
+    { number: 3, title: 'Interests & Specialties', description: 'What you want to buy' },
+    { number: 4, title: 'Operations Setup', description: 'Delivery and payment options' }
   ]
 
   const handleInputChange = (e) => {
-    const { name, value, type, files } = e.target
+    const { name, value, type, files, checked } = e.target
     
     if (name.includes('.')) {
       const [parent, child] = name.split('.')
@@ -147,9 +163,47 @@ const StoreRegistration = () => {
       }))
     } else if (type === 'file') {
       setFormData(prev => ({ ...prev, [name]: files[0] }))
+    } else if (type === 'checkbox') {
+      setFormData(prev => ({ ...prev, [name]: checked }))
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
+  }
+
+  const handleDeliveryOptionChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      deliveryOptions: prev.deliveryOptions.map((option, i) => 
+        i === index ? { ...option, [field]: value } : option
+      )
+    }))
+  }
+
+  const handlePaymentMethodChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      paymentMethods: prev.paymentMethods.map((method, i) => 
+        i === index ? { ...method, [field]: value } : method
+      )
+    }))
+  }
+
+  const addSpecialty = () => {
+    const specialty = document.getElementById('newSpecialty').value.trim()
+    if (specialty && !formData.specialties.includes(specialty)) {
+      setFormData(prev => ({
+        ...prev,
+        specialties: [...prev.specialties, specialty]
+      }))
+      document.getElementById('newSpecialty').value = ''
+    }
+  }
+
+  const removeSpecialty = (specialty) => {
+    setFormData(prev => ({
+      ...prev,
+      specialties: prev.specialties.filter(s => s !== specialty)
+    }))
   }
 
   const toggleCategory = (categoryId) => {
@@ -186,29 +240,143 @@ const StoreRegistration = () => {
     e.preventDefault()
     setIsLoading(true)
     
-    // Simulate registration process
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Navigate to onboarding/tutorial
-    navigate('/store-onboarding')
-    setIsLoading(false)
+    try {
+      // Prepare request body according to API specification
+      const requestBody = {
+        ownerName: formData.ownerName,
+        storeName: formData.storeName,
+        email: formData.email,
+        password: formData.password,
+        businessType: formData.businessType,
+        phone: formData.phone || undefined,
+        website: formData.website || undefined,
+        description: formData.description || undefined,
+        businessFocus: formData.businessFocus || undefined,
+        location: {
+          province: formData.location.province,
+          district: formData.location.district,
+          city: formData.location.city,
+          address: formData.location.address || undefined,
+          postalCode: formData.location.postalCode || undefined
+        },
+        interestedCategories: formData.interestedCategories,
+        specialties: formData.specialties,
+        deliveryOptions: formData.deliveryOptions.filter(option => option.available),
+        paymentMethods: formData.paymentMethods.filter(method => method.available),
+        operatingHours: formData.operatingHours
+      }
+
+      // Remove undefined values to keep request clean
+      Object.keys(requestBody).forEach(key => {
+        if (requestBody[key] === undefined) {
+          delete requestBody[key]
+        }
+      })
+
+      console.log('Store Registration Request Body:', requestBody)
+      
+      // Make the actual API call
+      const response = await storesAPI.register(requestBody)
+      
+      if (response.success) {
+        // Store the token if provided
+        if (response.data.token) {
+          localStorage.setItem('storeToken', response.data.token)
+        }
+        
+        // Navigate to onboarding/tutorial
+        navigate('/store-onboarding')
+      } else {
+        throw new Error(response.message || 'Registration failed')
+      }
+      
+    } catch (error) {
+      console.error('Registration error:', error)
+      // Handle error - show error message to user
+      alert(error.message || 'Registration failed. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const validateStep = () => {
     switch (currentStep) {
       case 1:
-        return formData.storeName && formData.email && formData.password && 
-               formData.password === formData.confirmPassword
+        // Validate required fields and business rules
+        const isOwnerNameValid = formData.ownerName && formData.ownerName.length >= 2 && formData.ownerName.length <= 255
+        const isStoreNameValid = formData.storeName && formData.storeName.length >= 2 && formData.storeName.length <= 255
+        const isEmailValid = formData.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+        const isPasswordValid = formData.password && formData.password.length >= 8 && 
+                               /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)
+        const isPasswordConfirmed = formData.password === formData.confirmPassword
+        const isBusinessTypeSelected = formData.businessType
+        
+        return isOwnerNameValid && isStoreNameValid && isEmailValid && 
+               isPasswordValid && isPasswordConfirmed && isBusinessTypeSelected
       case 2:
-        return formData.businessType && formData.location.province && 
-               formData.location.district && formData.phone
+        // Location is required, other fields are optional but should be valid if provided
+        const isProvinceValid = formData.location.province
+        const isDistrictValid = formData.location.district
+        const isCityValid = formData.location.city
+        const isPhoneValid = !formData.phone || /^\+94\s?\d{2}\s?\d{3}\s?\d{4}$/.test(formData.phone)
+        const isWebsiteValid = !formData.website || /^https?:\/\/.+/.test(formData.website)
+        
+        return isProvinceValid && isDistrictValid && isCityValid && isPhoneValid && isWebsiteValid
       case 3:
         return formData.interestedCategories.length > 0
       case 4:
-        return true // Optional step
+        return true // All fields are optional in operations setup
       default:
         return false
     }
+  }
+
+  const getValidationErrors = () => {
+    const errors = []
+    
+    if (currentStep === 1) {
+      if (!formData.ownerName || formData.ownerName.length < 2) {
+        errors.push('Owner name must be at least 2 characters')
+      }
+      if (!formData.storeName || formData.storeName.length < 2) {
+        errors.push('Store name must be at least 2 characters')
+      }
+      if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        errors.push('Please enter a valid email address')
+      }
+      if (!formData.password || formData.password.length < 8) {
+        errors.push('Password must be at least 8 characters')
+      }
+      if (formData.password && !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+        errors.push('Password must contain uppercase, lowercase, and number')
+      }
+      if (formData.password !== formData.confirmPassword) {
+        errors.push('Passwords do not match')
+      }
+      if (!formData.businessType) {
+        errors.push('Please select a business type')
+      }
+    }
+    
+    if (currentStep === 2) {
+      if (!formData.location.province) errors.push('Province is required')
+      if (!formData.location.district) errors.push('District is required')
+      if (!formData.location.city) errors.push('City is required')
+      if (formData.phone && !/^\+94\s?\d{2}\s?\d{3}\s?\d{4}$/.test(formData.phone)) {
+        errors.push('Phone number should be in format: +94 77 123 4567')
+      }
+      if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
+        errors.push('Website should start with http:// or https://')
+      }
+    }
+    
+    if (currentStep === 3) {
+      if (formData.interestedCategories.length === 0) {
+        errors.push('Please select at least one category')
+      }
+    }
+    
+    return errors
   }
 
   return (
@@ -274,6 +442,22 @@ const StoreRegistration = () => {
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div>
+                  <label htmlFor="ownerName" className="block text-sm font-medium text-primary-700 mb-2">
+                    Owner Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="ownerName"
+                    name="ownerName"
+                    required
+                    value={formData.ownerName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter owner/manager name"
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="storeName" className="block text-sm font-medium text-primary-700 mb-2">
                     Store Name *
                   </label>
@@ -317,7 +501,7 @@ const StoreRegistration = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Create a strong password"
+                    placeholder="Create a strong password (min 8 chars with uppercase, lowercase, number)"
                   />
                 </div>
 
@@ -339,12 +523,7 @@ const StoreRegistration = () => {
                     <p className="mt-1 text-sm text-error-600">Passwords do not match</p>
                   )}
                 </div>
-              </div>
-            )}
 
-            {/* Step 2: Business Info */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-primary-700 mb-3">
                     Business Type *
@@ -372,89 +551,47 @@ const StoreRegistration = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+            )}
 
-                <div>
-                  <label htmlFor="logo" className="block text-sm font-medium text-primary-700 mb-2">
-                    Store Logo
-                  </label>
-                  <div className="border-2 border-dashed border-primary-300 rounded-lg p-6 text-center">
-                    <input
-                      type="file"
-                      id="logo"
-                      name="logo"
-                      accept="image/*"
-                      onChange={handleInputChange}
-                      className="hidden"
-                    />
-                    <label htmlFor="logo" className="cursor-pointer">
-                      <svg className="mx-auto h-12 w-12 text-primary-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <div className="mt-2">
-                        <span className="text-blue-600 font-medium">Upload logo</span>
-                        <span className="text-primary-500"> or drag and drop</span>
-                      </div>
-                      <p className="text-xs text-primary-500">PNG, JPG, SVG up to 5MB</p>
-                    </label>
-                  </div>
-                </div>
-
+            {/* Step 2: Contact & Location Info */}
+            {currentStep === 2 && (
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="location.province" className="block text-sm font-medium text-primary-700 mb-2">
-                      Province *
+                    <label htmlFor="phone" className="block text-sm font-medium text-primary-700 mb-2">
+                      Phone Number
                     </label>
-                    <select
-                      id="location.province"
-                      name="location.province"
-                      required
-                      value={formData.location.province}
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
                       onChange={handleInputChange}
                       className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Province</option>
-                      {provinces.map(province => (
-                        <option key={province} value={province}>{province}</option>
-                      ))}
-                    </select>
+                      placeholder="+94 77 123 4567"
+                    />
                   </div>
 
                   <div>
-                    <label htmlFor="location.district" className="block text-sm font-medium text-primary-700 mb-2">
-                      District *
+                    <label htmlFor="website" className="block text-sm font-medium text-primary-700 mb-2">
+                      Website
                     </label>
                     <input
-                      type="text"
-                      id="location.district"
-                      name="location.district"
-                      required
-                      value={formData.location.district}
+                      type="url"
+                      id="website"
+                      name="website"
+                      value={formData.website}
                       onChange={handleInputChange}
                       className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter district"
+                      placeholder="https://yourstore.lk"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-primary-700 mb-2">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    required
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="+94 11 123 4567"
-                  />
                 </div>
 
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-primary-700 mb-2">
-                    Business Description
+                    Store Description
                   </label>
                   <textarea
                     id="description"
@@ -466,10 +603,113 @@ const StoreRegistration = () => {
                     placeholder="Tell us about your business..."
                   />
                 </div>
+
+                <div>
+                  <h3 className="text-lg font-medium text-primary-900 mb-4">
+                    Location Information *
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="location.province" className="block text-sm font-medium text-primary-700 mb-2">
+                        Province *
+                      </label>
+                      <select
+                        id="location.province"
+                        name="location.province"
+                        required
+                        value={formData.location.province}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Province</option>
+                        {provinces.map(province => (
+                          <option key={province} value={province}>{province}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="location.district" className="block text-sm font-medium text-primary-700 mb-2">
+                        District *
+                      </label>
+                      <input
+                        type="text"
+                        id="location.district"
+                        name="location.district"
+                        required
+                        value={formData.location.district}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter district"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="location.city" className="block text-sm font-medium text-primary-700 mb-2">
+                        City *
+                      </label>
+                      <input
+                        type="text"
+                        id="location.city"
+                        name="location.city"
+                        required
+                        value={formData.location.city}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter city"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="location.postalCode" className="block text-sm font-medium text-primary-700 mb-2">
+                        Postal Code
+                      </label>
+                      <input
+                        type="text"
+                        id="location.postalCode"
+                        name="location.postalCode"
+                        value={formData.location.postalCode}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="00100"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label htmlFor="location.address" className="block text-sm font-medium text-primary-700 mb-2">
+                      Full Address
+                    </label>
+                    <textarea
+                      id="location.address"
+                      name="location.address"
+                      rows={2}
+                      value={formData.location.address}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter your store address"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="businessFocus" className="block text-sm font-medium text-primary-700 mb-2">
+                    Business Focus
+                  </label>
+                  <textarea
+                    id="businessFocus"
+                    name="businessFocus"
+                    rows={3}
+                    value={formData.businessFocus}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="What are your specific requirements? Quality standards, quantities, etc..."
+                  />
+                </div>
               </div>
             )}
 
-            {/* Step 3: Interests */}
+            {/* Step 3: Interests & Specialties */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div>
@@ -499,90 +739,177 @@ const StoreRegistration = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="businessFocus" className="block text-sm font-medium text-primary-700 mb-2">
-                    Business Focus
-                  </label>
-                  <textarea
-                    id="businessFocus"
-                    name="businessFocus"
-                    rows={3}
-                    value={formData.businessFocus}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="What are your specific requirements? Quality standards, quantities, etc..."
-                  />
+                  <h3 className="text-lg font-medium text-primary-900 mb-4">
+                    Store Specialties
+                  </h3>
+                  <p className="text-sm text-primary-600 mb-4">
+                    Add specific areas your store specializes in (e.g., "Organic Products", "Local Produce")
+                  </p>
+                  
+                  <div className="flex space-x-2 mb-4">
+                    <input
+                      type="text"
+                      id="newSpecialty"
+                      placeholder="Enter a specialty..."
+                      className="flex-1 px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onKeyPress={(e) => e.key === 'Enter' && addSpecialty()}
+                    />
+                    <button
+                      type="button"
+                      onClick={addSpecialty}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {formData.specialties.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.specialties.map((specialty, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center space-x-2"
+                        >
+                          <span>{specialty}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeSpecialty(specialty)}
+                            className="text-blue-500 hover:text-blue-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Step 4: Find Producers */}
+            {/* Step 4: Operations Setup */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-medium text-primary-900 mb-2">
-                    Connect with Producers
+                <div>
+                  <h3 className="text-lg font-medium text-primary-900 mb-4">
+                    Delivery Options
                   </h3>
-                  <p className="text-sm text-primary-600">
-                    Start building relationships with quality producers
+                  <p className="text-sm text-primary-600 mb-4">
+                    Configure how you want to receive products from producers
                   </p>
-                </div>
-
-                <div className="space-y-4">
-                  {mockProducers.map(producer => (
-                    <div
-                      key={producer.id}
-                      className={`p-4 rounded-lg border transition-all duration-200 ${
-                        formData.selectedProducers.includes(producer.id)
-                          ? 'bg-blue-50 border-blue-300'
-                          : 'bg-white border-primary-200 hover:border-primary-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-2xl">
-                            {producer.image}
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-primary-900">{producer.name}</h4>
-                            <p className="text-sm text-primary-600">{producer.location}</p>
-                            <div className="flex items-center space-x-4 mt-1">
-                              <span className="text-xs text-primary-500">{producer.category}</span>
-                              <span className="text-xs text-primary-500">⭐ {producer.rating}</span>
-                              <span className="text-xs text-primary-500">{producer.products} products</span>
-                            </div>
-                          </div>
+                  
+                  <div className="space-y-4">
+                    {formData.deliveryOptions.map((option, index) => (
+                      <div key={option.type} className="border border-primary-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={option.available}
+                              onChange={(e) => handleDeliveryOptionChange(index, 'available', e.target.checked)}
+                              className="rounded text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="font-medium text-primary-900 capitalize">
+                              {option.type.replace('_', ' ')}
+                            </span>
+                          </label>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => toggleProducer(producer.id)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            formData.selectedProducers.includes(producer.id)
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                          }`}
-                        >
-                          {formData.selectedProducers.includes(producer.id) ? 'Connected' : 'Connect'}
-                        </button>
+                        {option.available && (
+                          <div className="ml-6">
+                            <label className="block text-sm text-primary-600 mb-1">
+                              Cost (LKR)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={option.cost}
+                              onChange={(e) => handleDeliveryOptionChange(index, 'cost', parseFloat(e.target.value) || 0)}
+                              className="w-32 px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="0"
+                            />
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
-                <div className="text-center pt-4 border-t border-primary-200">
-                  <p className="text-sm text-primary-600 mb-3">
-                    Or connect with all recommended producers
+                <div>
+                  <h3 className="text-lg font-medium text-primary-900 mb-4">
+                    Payment Methods
+                  </h3>
+                  <p className="text-sm text-primary-600 mb-4">
+                    Select payment methods you accept from producers
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ 
-                      ...prev, 
-                      connectWithAll: !prev.connectWithAll,
-                      selectedProducers: !prev.connectWithAll ? mockProducers.map(p => p.id) : []
-                    }))}
-                    className="px-6 py-2 border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                  >
-                    {formData.connectWithAll ? 'Disconnect All' : 'Connect with All'}
-                  </button>
+                  
+                  <div className="space-y-4">
+                    {formData.paymentMethods.map((method, index) => (
+                      <div key={method.type} className="border border-primary-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={method.available}
+                              onChange={(e) => handlePaymentMethodChange(index, 'available', e.target.checked)}
+                              className="rounded text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="font-medium text-primary-900 capitalize">
+                              {method.type.replace('_', ' ')}
+                            </span>
+                          </label>
+                        </div>
+                        {method.available && method.type === 'card' && (
+                          <div className="ml-6">
+                            <label className="block text-sm text-primary-600 mb-1">
+                              Provider
+                            </label>
+                            <input
+                              type="text"
+                              value={method.provider || ''}
+                              onChange={(e) => handlePaymentMethodChange(index, 'provider', e.target.value)}
+                              className="w-48 px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="e.g., Visa/Mastercard"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-medium text-primary-900 mb-4">
+                    Operating Hours
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="operatingHours.weekdays" className="block text-sm font-medium text-primary-700 mb-2">
+                        Weekdays (Mon-Fri)
+                      </label>
+                      <input
+                        type="text"
+                        id="operatingHours.weekdays"
+                        name="operatingHours.weekdays"
+                        value={formData.operatingHours.weekdays}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="8:00 AM - 8:00 PM"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="operatingHours.weekends" className="block text-sm font-medium text-primary-700 mb-2">
+                        Weekends (Sat-Sun)
+                      </label>
+                      <input
+                        type="text"
+                        id="operatingHours.weekends"
+                        name="operatingHours.weekends"
+                        value={formData.operatingHours.weekends}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-3 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="8:00 AM - 9:00 PM"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -598,24 +925,39 @@ const StoreRegistration = () => {
                 Previous
               </button>
 
-              {currentStep < 4 ? (
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  disabled={!validateStep()}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Next Step
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isLoading ? 'Creating Account...' : 'Complete Registration'}
-                </button>
-              )}
+              <div className="flex flex-col items-end">
+                {!validateStep() && getValidationErrors().length > 0 && (
+                  <div className="mb-2 text-right">
+                    <div className="text-xs text-error-600 max-w-64">
+                      {getValidationErrors().slice(0, 2).map((error, index) => (
+                        <div key={index}>• {error}</div>
+                      ))}
+                      {getValidationErrors().length > 2 && (
+                        <div>• And {getValidationErrors().length - 2} more...</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {currentStep < 4 ? (
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={!validateStep()}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next Step
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoading ? 'Creating Account...' : 'Complete Registration'}
+                  </button>
+                )}
+              </div>
             </div>
           </form>
         </div>
