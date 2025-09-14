@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { producersAPI, storesAPI } from '../services/api'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -11,6 +12,7 @@ const Login = () => {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -18,25 +20,57 @@ const Login = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+    // Clear error when user starts typing
+    if (error) setError('')
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    // Simulate login process
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Navigate based on role
-    if (selectedRole === 'producer') {
-      navigate('/producer-dashboard')
-    } else if (selectedRole === 'store') {
-      navigate('/store-dashboard')
-    } else {
-      navigate('/admin-dashboard')
+    setError('')
+
+    try {
+      const credentials = {
+        email: formData.email,
+        password: formData.password
+      }
+
+      let response
+      if (selectedRole === 'producer') {
+        response = await producersAPI.login(credentials)
+      } else if (selectedRole === 'store') {
+        response = await storesAPI.login(credentials)
+      } else {
+        // Admin login - would need to implement admin API
+        throw new Error('Admin login not implemented yet')
+      }
+
+      if (response.success && response.token) {
+        // Store authentication data
+        localStorage.setItem('authToken', response.token)
+        localStorage.setItem('userType', selectedRole)
+        localStorage.setItem('userData', JSON.stringify(response.data))
+
+        // Store remember me preference
+        if (formData.rememberMe) {
+          localStorage.setItem('rememberLogin', 'true')
+        }
+
+        // Navigate based on role
+        if (selectedRole === 'producer') {
+          navigate('/producer-dashboard')
+        } else if (selectedRole === 'store') {
+          navigate('/store-dashboard')
+        }
+      } else {
+        setError('Login failed. Please try again.')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      setError(error.data?.message || error.message || 'Login failed. Please check your credentials.')
+    } finally {
+      setIsLoading(false)
     }
-    
-    setIsLoading(false)
   }
 
   const handleSocialLogin = (provider) => {
@@ -69,6 +103,18 @@ const Login = () => {
         {/* Login Form */}
         <div className="bg-white rounded-xl shadow-lg border border-primary-200 p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <div className="flex items-center">
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {error}
+                </div>
+              </div>
+            )}
+
             {/* Role Selector */}
             <div>
               <label className="text-sm font-medium text-primary-700 mb-3 block">
@@ -99,9 +145,37 @@ const Login = () => {
 
             {/* Email Input */}
             <div>
-              <label htmlFor="email" className="text-sm font-medium text-primary-700 block mb-2">
-                Email address
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label htmlFor="email" className="text-sm font-medium text-primary-700">
+                  Email address
+                </label>
+                {selectedRole === 'producer' && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      email: 'info@highlandtea.lk', 
+                      password: 'SecurePassword123' 
+                    }))}
+                    className="text-xs text-orange-600 hover:text-orange-700"
+                  >
+                    Use producer test credentials
+                  </button>
+                )}
+                {selectedRole === 'store' && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ 
+                      ...prev, 
+                      email: 'store@example.com', 
+                      password: 'StorePassword123' 
+                    }))}
+                    className="text-xs text-blue-600 hover:text-blue-700"
+                  >
+                    Use store test credentials
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

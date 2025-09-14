@@ -94,11 +94,28 @@ export const categoriesAPI = {
 
 // Producers API
 export const producersAPI = {
-  // Producer Registration
+  // Producer Authentication
+  login: async (credentials) => {
+    return apiRequest('/producers/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+
   register: async (producerData) => {
-    return apiRequest('/producers', {
+    return apiRequest('/producers/register', {
       method: 'POST',
       body: JSON.stringify(producerData),
+    });
+  },
+
+  updatePassword: async (token, passwordData) => {
+    return apiRequest('/producers/password', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(passwordData),
     });
   },
 

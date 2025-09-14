@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test</h1>
+    <button onclick="testAPI()">Test Producer Login</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                console.log('Testing API call...');
+                
+                const response = await fetch('http://localhost:3000/api/producers/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'info@highlandtea.lk',
+                        password: 'SecurePassword123'
+                    })
+                });
+                
+                console.log('Response received:', response.status, response.statusText);
+                console.log('Response headers:', response.headers);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <h2>Success!</h2>
+                        <p>Status: ${response.status}</p>
+                        <p>Token: ${data.token ? 'Present' : 'Missing'}</p>
+                        <p>Name: ${data.data?.name}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h2>Error!</h2>
+                        <p>Status: ${response.status}</p>
+                        <p>Message: ${data.message}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <h2>Network Error!</h2>
+                    <p>Error: ${error.message}</p>
+                    <p>This might be a CORS issue or server not running</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -21,6 +21,7 @@ CREATE TABLE producers (
     
     -- Contact Information
     email VARCHAR(255),
+    password_hash VARCHAR(255),
     phone VARCHAR(20),
     website VARCHAR(255),
     address TEXT,

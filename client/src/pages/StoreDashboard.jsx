@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Header from '../components/ui/Header'
 import Footer from '../components/ui/Footer'
 import StoreHomeFeed from '../components/store/StoreHomeFeed'
@@ -7,7 +8,70 @@ import ActivityCenter from '../components/store/ActivityCenter'
 import EditStoreDetails from '../components/store/EditStoreDetails'
 
 const StoreDashboard = () => {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('home')
+  const [store, setStore] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Check authentication and get store data
+    const token = localStorage.getItem('authToken')
+    const userType = localStorage.getItem('userType')
+    const userData = localStorage.getItem('userData')
+
+    if (!token || userType !== 'store') {
+      // Redirect to login if not authenticated as store
+      navigate('/login')
+      return
+    }
+
+    if (userData) {
+      try {
+        const parsedUserData = JSON.parse(userData)
+        setStore(parsedUserData)
+      } catch (error) {
+        console.error('Error parsing user data:', error)
+        navigate('/login')
+        return
+      }
+    }
+
+    setIsLoading(false)
+  }, [navigate])
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('userType')
+    localStorage.removeItem('userData')
+    navigate('/login')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-primary-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-primary-600">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!store) {
+    return (
+      <div className="min-h-screen bg-primary-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-primary-600">Unable to load store data</p>
+          <button 
+            onClick={() => navigate('/login')}
+            className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+          >
+            Return to Login
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const tabs = [
     { id: 'home', label: 'Home Feed', icon: 'home' },
@@ -83,12 +147,20 @@ const StoreDashboard = () => {
                 </svg>
                 Store Settings
               </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 border border-red-300 text-red-700 hover:bg-red-50 rounded-lg transition-colors text-sm"
+              >
+                Logout
+              </button>
               <div className="text-right">
-                <p className="text-sm font-medium text-primary-900">Sarah Wilson</p>
-                <p className="text-xs text-blue-600">Store Owner</p>
+                <p className="text-sm font-medium text-primary-900">{store.storeName || store.ownerName}</p>
+                <p className="text-xs text-blue-600">Store Owner • {store.status}</p>
               </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-lg font-medium">SW</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-lg font-medium">
+                  {(store.storeName || store.ownerName)?.charAt(0)?.toUpperCase() || 'S'}
+                </span>
               </div>
             </div>
           </div>
