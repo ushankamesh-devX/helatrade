@@ -54,6 +54,10 @@ const ProducerDashboard = () => {
     }
   }, [])
 
+  const handleProfileUpdate = (updatedProducer) => {
+    setProducer(updatedProducer)
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('authToken')
     localStorage.removeItem('userType')
@@ -154,7 +158,7 @@ const ProducerDashboard = () => {
       case 'analytics':
         return <AnalyticsDashboard />
       case 'profile':
-        return <EditProfile />
+        return <EditProfile producer={producer} onUpdate={handleProfileUpdate} />
       default:
         return <ProducerHomeFeed />
     }

@@ -1,22 +1,21 @@
-// import React, { useState, useRef } from 'react'
-
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useCategories } from '../../hooks/useCategories'
+import { producersAPI } from '../../services/api'
 
-const EditProfile = ({ onClose, onSave }) => {
+const EditProfile = ({ producer, onUpdate }) => {
   const [profileData, setProfileData] = useState({
-    name: 'John Doe',
-    businessName: 'Highland Tea Estate',
-    email: 'john.doe@example.com',
-    phone: '+94 77 123 4567',
-    location: 'Kandy, Sri Lanka',
-    selectedCategories: ['tea', 'herbs'], // Changed from single 'category' to array 'selectedCategories'
-    description: 'Premium Ceylon tea producer with over 20 years of experience in organic tea cultivation. We specialize in high-quality tea leaves from the hill country.',
-    website: 'https://highlandtea.lk',
-    establishedYear: '2003',
-    certifications: ['Organic Certified', 'Fair Trade', 'Rainforest Alliance'],
-    specialties: ['Black Tea', 'Green Tea', 'White Tea', 'Herbal Tea'],
-    languages: ['English', 'Sinhala', 'Tamil'],
+    name: '',
+    businessName: '',
+    email: '',
+    phone: '',
+    location: '',
+    selectedCategories: [],
+    description: '',
+    website: '',
+    establishedYear: '',
+    certifications: [],
+    specialties: [],
+    languages: [],
     businessHours: {
       monday: { open: '08:00', close: '17:00', closed: false },
       tuesday: { open: '08:00', close: '17:00', closed: false },
@@ -27,23 +26,110 @@ const EditProfile = ({ onClose, onSave }) => {
       sunday: { open: '', close: '', closed: true }
     },
     socialMedia: {
-      facebook: 'https://facebook.com/highlandtea',
-      instagram: 'https://instagram.com/highland_tea_estate',
+      facebook: '',
+      instagram: '',
       twitter: '',
-      linkedin: 'https://linkedin.com/company/highland-tea'
+      linkedin: '',
+      youtube: ''
     }
   })
 
-  const [profileImage, setProfileImage] = useState('/api/placeholder/120/120')
-  const [bannerImage, setBannerImage] = useState('/api/placeholder/800/300')
+  // Initialize profile data from producer prop
+  useEffect(() => {
+    if (producer) {
+      const transformedData = {
+        name: producer.name || '',
+        businessName: producer.businessType || producer.name || '',
+        email: producer.contact?.email || '',
+        phone: producer.contact?.phone || '',
+        location: producer.location || '',
+        selectedCategories: producer.categories ? producer.categories.map(cat => cat.slug) : [],
+        description: producer.bio || '',
+        website: producer.contact?.website || '',
+        establishedYear: producer.foundedYear || '',
+        certifications: producer.certifications ? producer.certifications.map(cert => cert.certification_name) : [],
+        specialties: producer.specialties || [],
+        languages: producer.languages ? producer.languages.map(lang => lang.language) : [],
+        businessHours: producer.businessHours ? {
+          monday: {
+            open: producer.businessHours.monday?.openTime?.slice(0, 5) || '08:00',
+            close: producer.businessHours.monday?.closeTime?.slice(0, 5) || '17:00',
+            closed: producer.businessHours.monday?.isOpen === 0
+          },
+          tuesday: {
+            open: producer.businessHours.tuesday?.openTime?.slice(0, 5) || '08:00',
+            close: producer.businessHours.tuesday?.closeTime?.slice(0, 5) || '17:00',
+            closed: producer.businessHours.tuesday?.isOpen === 0
+          },
+          wednesday: {
+            open: producer.businessHours.wednesday?.openTime?.slice(0, 5) || '08:00',
+            close: producer.businessHours.wednesday?.closeTime?.slice(0, 5) || '17:00',
+            closed: producer.businessHours.wednesday?.isOpen === 0
+          },
+          thursday: {
+            open: producer.businessHours.thursday?.openTime?.slice(0, 5) || '08:00',
+            close: producer.businessHours.thursday?.closeTime?.slice(0, 5) || '17:00',
+            closed: producer.businessHours.thursday?.isOpen === 0
+          },
+          friday: {
+            open: producer.businessHours.friday?.openTime?.slice(0, 5) || '08:00',
+            close: producer.businessHours.friday?.closeTime?.slice(0, 5) || '17:00',
+            closed: producer.businessHours.friday?.isOpen === 0
+          },
+          saturday: {
+            open: producer.businessHours.saturday?.openTime?.slice(0, 5) || '08:00',
+            close: producer.businessHours.saturday?.closeTime?.slice(0, 5) || '14:00',
+            closed: producer.businessHours.saturday?.isOpen === 0
+          },
+          sunday: {
+            open: producer.businessHours.sunday?.openTime?.slice(0, 5) || '',
+            close: producer.businessHours.sunday?.closeTime?.slice(0, 5) || '',
+            closed: producer.businessHours.sunday?.isOpen === 0 || true
+          }
+        } : {
+          monday: { open: '08:00', close: '17:00', closed: false },
+          tuesday: { open: '08:00', close: '17:00', closed: false },
+          wednesday: { open: '08:00', close: '17:00', closed: false },
+          thursday: { open: '08:00', close: '17:00', closed: false },
+          friday: { open: '08:00', close: '17:00', closed: false },
+          saturday: { open: '08:00', close: '14:00', closed: false },
+          sunday: { open: '', close: '', closed: true }
+        },
+        socialMedia: {
+          facebook: producer.socialMedia?.facebook || '',
+          instagram: producer.socialMedia?.instagram || '',
+          twitter: producer.socialMedia?.twitter || '',
+          linkedin: producer.socialMedia?.linkedin || '',
+          youtube: producer.socialMedia?.youtube || ''
+        }
+      }
+      setProfileData(transformedData)
+    }
+  }, [producer])
+
+  const [profileImage, setProfileImage] = useState('')
+  const [bannerImage, setBannerImage] = useState('')
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('basic')
   const [newCertification, setNewCertification] = useState('')
   const [newSpecialty, setNewSpecialty] = useState('')
   const [newLanguage, setNewLanguage] = useState('')
 
+  // Loading and error states
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [saveSuccess, setSaveSuccess] = useState('')
+
   const profileImageRef = useRef(null)
   const bannerImageRef = useRef(null)
+
+  // Initialize images from producer data
+  useEffect(() => {
+    if (producer) {
+      setProfileImage(producer.profileImage || producer.avatar || '/api/placeholder/120/120')
+      setBannerImage(producer.coverImage || '/api/placeholder/800/300')
+    }
+  }, [producer])
 
   // Get categories from API
   const { categories: apiCategories, loading: categoriesLoading } = useCategories()
@@ -84,6 +170,8 @@ const EditProfile = ({ onClose, onSave }) => {
       ...prev,
       [field]: value
     }))
+    // Clear any previous error messages when user starts editing
+    if (saveError) setSaveError('')
   }
 
   const handleNestedInputChange = (parent, field, value) => {
@@ -94,6 +182,8 @@ const EditProfile = ({ onClose, onSave }) => {
         [field]: value
       }
     }))
+    // Clear any previous error messages when user starts editing
+    if (saveError) setSaveError('')
   }
 
   const toggleCategory = (categoryId) => {
@@ -103,6 +193,8 @@ const EditProfile = ({ onClose, onSave }) => {
         ? prev.selectedCategories.filter(id => id !== categoryId)
         : [...prev.selectedCategories, categoryId]
     }))
+    // Clear any previous error messages when user starts editing
+    if (saveError) setSaveError('')
   }
 
   const handleBusinessHoursChange = (day, field, value) => {
@@ -116,6 +208,8 @@ const EditProfile = ({ onClose, onSave }) => {
         }
       }
     }))
+    // Clear any previous error messages when user starts editing
+    if (saveError) setSaveError('')
   }
 
   const handleImageUpload = (type, file) => {
@@ -151,10 +245,124 @@ const EditProfile = ({ onClose, onSave }) => {
     }))
   }
 
-  const handleSaveProfile = () => {
-    console.log('Saving profile:', profileData)
-    // Here you would typically make an API call to save the profile
-    alert('Profile updated successfully!')
+  // Transform form data to API format
+  const transformDataForAPI = () => {
+    // Get category IDs from selected category slugs
+    const categoryIds = profileData.selectedCategories
+      .map(slug => {
+        const category = categories.find(cat => cat.slug === slug)
+        return category ? category.id : null
+      })
+      .filter(id => id !== null) // Remove null values
+
+    // Transform business hours to API format
+    const businessHours = {}
+    Object.entries(profileData.businessHours).forEach(([day, hours]) => {
+      businessHours[day] = {
+        isOpen: !hours.closed,
+        openTime: hours.closed ? null : hours.open,
+        closeTime: hours.closed ? null : hours.close
+      }
+    })
+
+    return {
+      name: profileData.name,
+      bio: profileData.description,
+      location: profileData.location,
+      businessType: profileData.businessName,
+      foundedYear: profileData.establishedYear ? parseInt(profileData.establishedYear) : null,
+      email: profileData.email,
+      phone: profileData.phone,
+      website: profileData.website,
+      address: profileData.location, // Using location as address for now
+      socialMedia: {
+        facebook: profileData.socialMedia.facebook || null,
+        instagram: profileData.socialMedia.instagram || null,
+        twitter: profileData.socialMedia.twitter || null,
+        linkedin: profileData.socialMedia.linkedin || null,
+        youtube: profileData.socialMedia.youtube || null
+      },
+      categories: categoryIds,
+      specialties: profileData.specialties,
+      certifications: profileData.certifications,
+      languages: profileData.languages.map(lang => ({ language: lang, proficiency: 'intermediate' })),
+      businessHours
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    if (!producer?.id) {
+      setSaveError('Producer data not available')
+      return
+    }
+
+    // Basic validation
+    if (!profileData.name.trim()) {
+      setSaveError('Full name is required')
+      return
+    }
+
+    if (!profileData.businessName.trim()) {
+      setSaveError('Business name is required')
+      return
+    }
+
+    if (profileData.selectedCategories.length === 0) {
+      setSaveError('Please select at least one category')
+      return
+    }
+
+    // Check if categories are loaded
+    if (categoriesLoading) {
+      setSaveError('Categories are still loading. Please wait.')
+      return
+    }
+
+    setIsSaving(true)
+    setSaveError('')
+    setSaveSuccess('')
+
+    try {
+      // Get auth token from localStorage
+      const authToken = localStorage.getItem('authToken')
+      if (!authToken) {
+        setSaveError('Authentication token not found. Please login again.')
+        return
+      }
+
+      // Transform form data to API format
+      const apiData = transformDataForAPI()
+
+      // Make API call to update producer
+      const response = await producersAPI.update(authToken, producer.id, apiData)
+
+      if (response.success) {
+        setSaveSuccess('Profile updated successfully!')
+
+        // Update local producer data if onUpdate callback is provided
+        if (onUpdate && response.data) {
+          onUpdate(response.data)
+        }
+
+        // Update localStorage userData
+        const updatedUserData = { ...producer, ...response.data }
+        localStorage.setItem('userData', JSON.stringify(updatedUserData))
+
+        // Clear success message after 3 seconds
+        setTimeout(() => setSaveSuccess(''), 3000)
+      } else {
+        setSaveError(response.message || 'Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+      setSaveError(
+        error.data?.message ||
+        error.message ||
+        'Failed to update profile. Please try again.'
+      )
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const tabs = [
@@ -172,20 +380,55 @@ const EditProfile = ({ onClose, onSave }) => {
           <div>
             <h2 className="text-xl font-semibold text-primary-900">Edit Profile</h2>
             <p className="text-primary-600">Update your profile information and business details</p>
+            
+            {/* Success/Error Messages */}
+            {saveSuccess && (
+              <div className="mt-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  {saveSuccess}
+                </div>
+              </div>
+            )}
+            
+            {saveError && (
+              <div className="mt-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {saveError}
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="flex items-center space-x-3">
             <button
               onClick={() => window.history.back()}
-              className="px-4 py-2 border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50 transition-colors"
+              disabled={isSaving}
+              className="px-4 py-2 border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               onClick={handleSaveProfile}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              disabled={isSaving}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              Save Changes
+              {isSaving ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </button>
           </div>
         </div>
@@ -649,15 +892,27 @@ const EditProfile = ({ onClose, onSave }) => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => window.history.back()}
-              className="px-4 py-2 border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50 transition-colors"
+              disabled={isSaving}
+              className="px-4 py-2 border border-primary-300 text-primary-700 rounded-lg hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               onClick={handleSaveProfile}
-              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              disabled={isSaving}
+              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              Save Changes
+              {isSaving ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </button>
           </div>
         </div>

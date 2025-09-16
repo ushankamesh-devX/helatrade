@@ -161,9 +161,12 @@ export const producersAPI = {
   },
 
   // Update producer
-  update: async (id, producerData) => {
+  update: async (token, id, producerData) => {
     return apiRequest(`/producers/${id}`, {
       method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
       body: JSON.stringify(producerData),
     });
   },
