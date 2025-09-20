@@ -1,5 +1,4 @@
-const { executeQuery, getOne } = require('../config/database');
-const slugify = require('slugify');
+const { query } = require('../config/database');
 
 class Category {
   constructor(data) {
@@ -7,194 +6,313 @@ class Category {
     this.name = data.name;
     this.slug = data.slug;
     this.icon = data.icon;
-    this.is_active = data.is_active;
+    this.description = data.description;
+    this.parent_id = data.parent_id;
+    this.display_order = data.display_order || 0;
+    this.is_active = data.is_active !== undefined ? data.is_active : true;
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
   }
 
   // Get all categories
   static async getAll(filters = {}) {
-    let query = 'SELECT * FROM categories';
-    const params = [];
-    const conditions = [];
-
-    // Apply filters
-    if (filters.active !== undefined) {
-      conditions.push('is_active = ?');
-      params.push(filters.active);
-    }
-
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    query += ' ORDER BY name ASC';
-
-    // Apply pagination
-    if (filters.limit) {
-      query += ' LIMIT ?';
-      params.push(parseInt(filters.limit));
-      
-      if (filters.offset) {
-        query += ' OFFSET ?';
-        params.push(parseInt(filters.offset));
-      }
-    }
-
     try {
-      const rows = await executeQuery(query, params);
-      return rows.map(row => new Category(row));
+      let sql = 'SELECT * FROM categories';
+      const params = [];
+      const conditions = [];
+
+      // Apply filters
+      if (filters.is_active !== undefined) {
+        conditions.push('is_active = ?');
+        params.push(filters.is_active);
+      }
+
+      if (filters.parent_id !== undefined) {
+        if (filters.parent_id === null) {
+          conditions.push('parent_id IS NULL');
+        } else {
+          conditions.push('parent_id = ?');
+          params.push(filters.parent_id);
+        }
+      }
+
+      if (conditions.length > 0) {
+        sql += ' WHERE ' + conditions.join(' AND ');
+      }
+
+      sql += ' ORDER BY display_order ASC, name ASC';
+
+      const result = await query(sql, params);
+      return result.map(row => new Category(row));
     } catch (error) {
-      throw new Error(`Failed to fetch categories: ${error.message}`);
+      console.error('Category.getAll error:', error);
+      throw error;
     }
   }
 
   // Get category by ID
   static async getById(id) {
     try {
-      const query = 'SELECT * FROM categories WHERE id = ?';
-      const row = await getOne(query, [id]);
-      return row ? new Category(row) : null;
+      const sql = 'SELECT * FROM categories WHERE id = ?';
+      const result = await query(sql, [id]);
+      
+      if (result.length === 0) {
+        return null;
+      }
+
+      return new Category(result[0]);
     } catch (error) {
-      throw new Error(`Failed to fetch category: ${error.message}`);
+      console.error('Category.getById error:', error);
+      throw error;
     }
   }
 
   // Get category by slug
   static async getBySlug(slug) {
     try {
-      const query = 'SELECT * FROM categories WHERE slug = ?';
-      const row = await getOne(query, [slug]);
-      return row ? new Category(row) : null;
+      const sql = 'SELECT * FROM categories WHERE slug = ?';
+      const result = await query(sql, [slug]);
+      
+      if (result.length === 0) {
+        return null;
+      }
+
+      return new Category(result[0]);
     } catch (error) {
-      throw new Error(`Failed to fetch category: ${error.message}`);
+      console.error('Category.getBySlug error:', error);
+      throw error;
     }
   }
 
   // Create new category
-  static async create(data) {
+  static async create(categoryData) {
     try {
-      // Generate slug from name
-      const slug = slugify(data.name, { lower: true, strict: true });
-      
-      // Check if name or slug already exists
-      const existingName = await getOne('SELECT id FROM categories WHERE name = ?', [data.name]);
-      if (existingName) {
-        throw new Error('Category name already exists');
+      // Generate slug if not provided
+      if (!categoryData.slug) {
+        categoryData.slug = this.generateSlug(categoryData.name);
       }
 
-      const existingSlug = await getOne('SELECT id FROM categories WHERE slug = ?', [slug]);
-      if (existingSlug) {
-        throw new Error('Category slug already exists');
-      }
-
-      const query = `
-        INSERT INTO categories (name, slug, icon, is_active) 
-        VALUES (?, ?, ?, ?)
+      const sql = `
+        INSERT INTO categories (name, slug, icon, description, parent_id, display_order, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `;
+      
       const params = [
-        data.name,
-        slug,
-        data.icon || null,
-        data.is_active !== undefined ? data.is_active : true
+        categoryData.name,
+        categoryData.slug,
+        categoryData.icon || null,
+        categoryData.description || null,
+        categoryData.parent_id || null,
+        categoryData.display_order || 0,
+        categoryData.is_active !== undefined ? categoryData.is_active : true
       ];
 
-      const result = await executeQuery(query, params);
-      return await Category.getById(result.insertId);
+      const result = await query(sql, params);
+      
+      // Return the created category
+      return await this.getById(result.insertId);
     } catch (error) {
-      throw new Error(`Failed to create category: ${error.message}`);
+      console.error('Category.create error:', error);
+      throw error;
     }
   }
 
   // Update category
-  static async update(id, data) {
+  static async update(id, updateData) {
     try {
-      const category = await Category.getById(id);
-      if (!category) {
+      const existingCategory = await this.getById(id);
+      if (!existingCategory) {
         throw new Error('Category not found');
       }
 
-      const updates = [];
+      // Generate slug if name is being updated and slug is not provided
+      if (updateData.name && !updateData.slug) {
+        updateData.slug = this.generateSlug(updateData.name);
+      }
+
+      const fields = [];
       const params = [];
 
-      if (data.name) {
-        // Check if new name already exists (excluding current category)
-        const existingName = await getOne(
-          'SELECT id FROM categories WHERE name = ? AND id != ?', 
-          [data.name, id]
-        );
-        if (existingName) {
-          throw new Error('Category name already exists');
+      // Build dynamic update query
+      const allowedFields = ['name', 'slug', 'icon', 'description', 'parent_id', 'display_order', 'is_active'];
+      
+      allowedFields.forEach(field => {
+        if (updateData.hasOwnProperty(field)) {
+          fields.push(`${field} = ?`);
+          params.push(updateData[field]);
         }
+      });
 
-        const newSlug = slugify(data.name, { lower: true, strict: true });
-        updates.push('name = ?', 'slug = ?');
-        params.push(data.name, newSlug);
+      if (fields.length === 0) {
+        throw new Error('No valid fields to update');
       }
 
-      if (data.icon !== undefined) {
-        updates.push('icon = ?');
-        params.push(data.icon);
-      }
-
-      if (data.is_active !== undefined) {
-        updates.push('is_active = ?');
-        params.push(data.is_active);
-      }
-
-      if (updates.length === 0) {
-        return category;
-      }
-
-      updates.push('updated_at = CURRENT_TIMESTAMP');
+      // Add updated_at timestamp
+      fields.push('updated_at = CURRENT_TIMESTAMP');
       params.push(id);
 
-      const query = `UPDATE categories SET ${updates.join(', ')} WHERE id = ?`;
-      await executeQuery(query, params);
-
-      return await Category.getById(id);
+      const sql = `UPDATE categories SET ${fields.join(', ')} WHERE id = ?`;
+      
+      await query(sql, params);
+      
+      // Return the updated category
+      return await this.getById(id);
     } catch (error) {
-      throw new Error(`Failed to update category: ${error.message}`);
+      console.error('Category.update error:', error);
+      throw error;
     }
   }
 
-  // Delete category (soft delete)
-  static async delete(id) {
+  // Soft delete category (set is_active to false)
+  static async softDelete(id) {
     try {
-      const category = await Category.getById(id);
-      if (!category) {
+      const existingCategory = await this.getById(id);
+      if (!existingCategory) {
         throw new Error('Category not found');
       }
 
-      const query = 'UPDATE categories SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
-      await executeQuery(query, [id]);
+      const sql = 'UPDATE categories SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+      await query(sql, [id]);
+      
       return true;
     } catch (error) {
-      throw new Error(`Failed to delete category: ${error.message}`);
+      console.error('Category.softDelete error:', error);
+      throw error;
     }
   }
 
-  // Get total count
-  static async getCount(filters = {}) {
-    let query = 'SELECT COUNT(*) as total FROM categories';
-    const params = [];
-    const conditions = [];
-
-    if (filters.active !== undefined) {
-      conditions.push('is_active = ?');
-      params.push(filters.active);
-    }
-
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-
+  // Hard delete category (permanent deletion)
+  static async delete(id) {
     try {
-      const result = await getOne(query, params);
-      return result.total;
+      const existingCategory = await this.getById(id);
+      if (!existingCategory) {
+        throw new Error('Category not found');
+      }
+
+      // Check if category has subcategories
+      const subcategories = await this.getAll({ parent_id: id });
+      if (subcategories.length > 0) {
+        throw new Error('Cannot delete category with subcategories');
+      }
+
+      const sql = 'DELETE FROM categories WHERE id = ?';
+      await query(sql, [id]);
+      
+      return true;
     } catch (error) {
-      throw new Error(`Failed to get category count: ${error.message}`);
+      console.error('Category.delete error:', error);
+      throw error;
     }
+  }
+
+  // Get subcategories
+  async getSubcategories() {
+    try {
+      return await Category.getAll({ parent_id: this.id, is_active: true });
+    } catch (error) {
+      console.error('Category.getSubcategories error:', error);
+      throw error;
+    }
+  }
+
+  // Get parent category
+  async getParent() {
+    try {
+      if (!this.parent_id) {
+        return null;
+      }
+      return await Category.getById(this.parent_id);
+    } catch (error) {
+      console.error('Category.getParent error:', error);
+      throw error;
+    }
+  }
+
+  // Get category with relationships
+  static async getWithRelations(id) {
+    try {
+      const category = await this.getById(id);
+      if (!category) {
+        return null;
+      }
+
+      const subcategories = await category.getSubcategories();
+      const parent = await category.getParent();
+
+      return {
+        ...category,
+        subcategories,
+        parent
+      };
+    } catch (error) {
+      console.error('Category.getWithRelations error:', error);
+      throw error;
+    }
+  }
+
+  // Utility method to generate slug from name
+  static generateSlug(name) {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/[\s_-]+/g, '-') // Replace spaces, underscores, and multiple hyphens with single hyphen
+      .replace(/^-+|-+$/g, ''); // Remove leading and trailing hyphens
+  }
+
+  // Validate category data
+  static validateData(data, isUpdate = false) {
+    const errors = [];
+
+    // Name validation
+    if (!isUpdate && !data.name) {
+      errors.push('Name is required');
+    } else if (data.name && (typeof data.name !== 'string' || data.name.trim().length === 0)) {
+      errors.push('Name must be a non-empty string');
+    } else if (data.name && data.name.length > 255) {
+      errors.push('Name must be less than 255 characters');
+    }
+
+    // Slug validation
+    if (data.slug) {
+      if (typeof data.slug !== 'string' || data.slug.trim().length === 0) {
+        errors.push('Slug must be a non-empty string');
+      } else if (data.slug.length > 255) {
+        errors.push('Slug must be less than 255 characters');
+      } else if (!/^[a-z0-9-]+$/.test(data.slug)) {
+        errors.push('Slug must contain only lowercase letters, numbers, and hyphens');
+      }
+    }
+
+    // Icon validation
+    if (data.icon && (typeof data.icon !== 'string' || data.icon.length > 50)) {
+      errors.push('Icon must be a string with maximum 50 characters');
+    }
+
+    // Description validation
+    if (data.description && typeof data.description !== 'string') {
+      errors.push('Description must be a string');
+    }
+
+    // Display order validation
+    if (data.display_order !== undefined && (!Number.isInteger(data.display_order) || data.display_order < 0)) {
+      errors.push('Display order must be a non-negative integer');
+    }
+
+    // Parent ID validation
+    if (data.parent_id !== undefined && data.parent_id !== null && (!Number.isInteger(data.parent_id) || data.parent_id <= 0)) {
+      errors.push('Parent ID must be a positive integer or null');
+    }
+
+    // Active status validation
+    if (data.is_active !== undefined && typeof data.is_active !== 'boolean') {
+      errors.push('is_active must be a boolean');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   }
 }
 

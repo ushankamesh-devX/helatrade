@@ -2,45 +2,123 @@
 
 import React, { useState, useRef } from 'react'
 import { useCategories } from '../../hooks/useCategories'
+import { producerServices } from '../../services/producerServices'
 
-const EditProfile = ({ onClose, onSave }) => {
-  const [profileData, setProfileData] = useState({
-    name: 'John Doe',
-    businessName: 'Highland Tea Estate',
-    email: 'john.doe@example.com',
-    phone: '+94 77 123 4567',
-    location: 'Kandy, Sri Lanka',
-    selectedCategories: ['tea', 'herbs'], // Changed from single 'category' to array 'selectedCategories'
-    description: 'Premium Ceylon tea producer with over 20 years of experience in organic tea cultivation. We specialize in high-quality tea leaves from the hill country.',
-    website: 'https://highlandtea.lk',
-    establishedYear: '2003',
-    certifications: ['Organic Certified', 'Fair Trade', 'Rainforest Alliance'],
-    specialties: ['Black Tea', 'Green Tea', 'White Tea', 'Herbal Tea'],
-    languages: ['English', 'Sinhala', 'Tamil'],
-    businessHours: {
-      monday: { open: '08:00', close: '17:00', closed: false },
-      tuesday: { open: '08:00', close: '17:00', closed: false },
-      wednesday: { open: '08:00', close: '17:00', closed: false },
-      thursday: { open: '08:00', close: '17:00', closed: false },
-      friday: { open: '08:00', close: '17:00', closed: false },
-      saturday: { open: '08:00', close: '14:00', closed: false },
-      sunday: { open: '', close: '', closed: true }
-    },
-    socialMedia: {
-      facebook: 'https://facebook.com/highlandtea',
-      instagram: 'https://instagram.com/highland_tea_estate',
-      twitter: '',
-      linkedin: 'https://linkedin.com/company/highland-tea'
+const { producerServices: services, imageUploadService } = producerServices
+
+const EditProfile = ({ onClose, onSave, producer }) => {
+  // Transform producer data to match component's expected format
+  const initializeProfileData = () => {
+    if (!producer) {
+      return {
+        ownerName: '',
+        businessName: '',
+        email: '',
+        phone: '',
+        location: '',
+        province: '',
+        producerCategories: [],
+        description: '',
+        website: '',
+        establishedYear: '',
+        certifications: [],
+        specialties: [],
+        languages: [],
+        businessHours: {
+          monday: { open: '08:00', close: '17:00', closed: false },
+          tuesday: { open: '08:00', close: '17:00', closed: false },
+          wednesday: { open: '08:00', close: '17:00', closed: false },
+          thursday: { open: '08:00', close: '17:00', closed: false },
+          friday: { open: '08:00', close: '17:00', closed: false },
+          saturday: { open: '08:00', close: '14:00', closed: false },
+          sunday: { open: '', close: '', closed: true }
+        },
+        socialMedia: {
+          facebook: '',
+          instagram: '',
+          twitter: '',
+          linkedin: ''
+        }
+      }
     }
-  })
 
-  const [profileImage, setProfileImage] = useState('/api/placeholder/120/120')
-  const [bannerImage, setBannerImage] = useState('/api/placeholder/800/300')
+    // Transform business hours from API format to component format
+    const transformBusinessHours = () => {
+      const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      const hours = {}
+      
+      days.forEach(day => {
+        const dayData = producer.business_hours?.find(bh => bh.day_of_week === day)
+        if (dayData) {
+          hours[day] = {
+            open: dayData.open_time ? dayData.open_time.substring(0, 5) : '08:00',
+            close: dayData.close_time ? dayData.close_time.substring(0, 5) : '17:00',
+            closed: !dayData.is_open
+          }
+        } else {
+          hours[day] = { open: '', close: '', closed: true }
+        }
+      })
+      
+      return hours
+    }
+
+    // Transform social media from API format to component format
+    const transformSocialMedia = () => {
+      const social = {
+        facebook: '',
+        instagram: '',
+        twitter: '',
+        linkedin: ''
+      }
+      
+      if (producer.social_media && Array.isArray(producer.social_media)) {
+        producer.social_media.forEach(item => {
+          if (social.hasOwnProperty(item.platform)) {
+            social[item.platform] = item.url
+          }
+        })
+      }
+      
+      return social
+    }
+
+    return {
+      ownerName: producer.owner_name || '',
+      businessName: producer.business_name || '',
+      email: producer.email || '',
+      phone: producer.phone || '',
+      location: producer.location || '',
+      province: producer.province || '',
+      producerCategories: producer.categories?.map(cat => cat.id) || [],
+      description: producer.bio || '',
+      website: producer.website || '',
+      establishedYear: producer.established_year || '',
+      certifications: producer.certifications?.map(cert => 
+        typeof cert === 'string' ? cert : cert.certification_name
+      ) || [],
+      specialties: producer.specialties?.map(spec => 
+        typeof spec === 'string' ? spec : spec.specialty
+      ) || [],
+      languages: producer.languages?.map(lang => 
+        typeof lang === 'string' ? lang : lang.language
+      ) || [],
+      businessHours: transformBusinessHours(),
+      socialMedia: transformSocialMedia()
+    }
+  }
+
+  const [profileData, setProfileData] = useState(initializeProfileData)
+
+  const [profileImage, setProfileImage] = useState(producer?.avatar || '/api/placeholder/120/120')
+  const [bannerImage, setBannerImage] = useState(producer?.banner_image || 'https://placehold.co/1500x400')
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('basic')
   const [newCertification, setNewCertification] = useState('')
   const [newSpecialty, setNewSpecialty] = useState('')
   const [newLanguage, setNewLanguage] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const profileImageRef = useRef(null)
   const bannerImageRef = useRef(null)
@@ -53,22 +131,23 @@ const EditProfile = ({ onClose, onSave }) => {
     if (categoriesLoading || !apiCategories.length) {
       // Fallback categories while loading or if API fails
       return [
-        { id: 'vegetables', name: 'Vegetables', icon: '🥬' },
-        { id: 'fruits', name: 'Fruits', icon: '🍎' },
-        { id: 'grains', name: 'Grains & Rice', icon: '🌾' },
-        { id: 'spices', name: 'Spices', icon: '🌶️' },
-        { id: 'tea', name: 'Tea', icon: '🍃' },
-        { id: 'coconut', name: 'Coconut Products', icon: '🥥' },
-        { id: 'dairy', name: 'Dairy', icon: '🐄' },
-        { id: 'seafood', name: 'Seafood', icon: '🐟' },
-        { id: 'herbs', name: 'Herbs', icon: '🌿' },
-        { id: 'flowers', name: 'Flowers', icon: '🌺' }
+        { id: 'vegetables', numericId: 1, name: 'Vegetables', icon: '🥬' },
+        { id: 'fruits', numericId: 2, name: 'Fruits', icon: '🍎' },
+        { id: 'grains', numericId: 3, name: 'Grains & Rice', icon: '🌾' },
+        { id: 'spices', numericId: 4, name: 'Spices', icon: '🌶️' },
+        { id: 'tea', numericId: 5, name: 'Tea', icon: '🍃' },
+        { id: 'coconut', numericId: 6, name: 'Coconut Products', icon: '🥥' },
+        { id: 'dairy', numericId: 7, name: 'Dairy', icon: '🐄' },
+        { id: 'seafood', numericId: 8, name: 'Seafood', icon: '🐟' },
+        { id: 'herbs', numericId: 9, name: 'Herbs', icon: '🌿' },
+        { id: 'flowers', numericId: 10, name: 'Flowers', icon: '🌺' }
       ]
     }
     
     // Transform API categories to match expected format
     return apiCategories.map(cat => ({
       id: cat.slug,
+      numericId: cat.id, // Assuming API provides numeric ID
       name: cat.name,
       icon: cat.icon
     }))
@@ -97,11 +176,14 @@ const EditProfile = ({ onClose, onSave }) => {
   }
 
   const toggleCategory = (categoryId) => {
+    const category = categories.find(cat => cat.id === categoryId)
+    if (!category) return
+
     setProfileData(prev => ({
       ...prev,
-      selectedCategories: prev.selectedCategories.includes(categoryId)
-        ? prev.selectedCategories.filter(id => id !== categoryId)
-        : [...prev.selectedCategories, categoryId]
+      producerCategories: prev.producerCategories.includes(category.numericId)
+        ? prev.producerCategories.filter(id => id !== category.numericId)
+        : [...prev.producerCategories, category.numericId]
     }))
   }
 
@@ -118,19 +200,55 @@ const EditProfile = ({ onClose, onSave }) => {
     }))
   }
 
-  const handleImageUpload = (type, file) => {
-    if (file && file.type.startsWith('image/')) {
-      setIsUploading(true)
-      const imageUrl = URL.createObjectURL(file)
+  const handleImageUpload = async (type, file) => {
+    if (!file || !file.type.startsWith('image/')) {
+      alert('Please select a valid image file')
+      return
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB')
+      return
+    }
+
+    setIsUploading(true)
+    
+    try {
+      // Upload to BunnyCDN
+      const uploadResult = await imageUploadService.uploadImage(
+        file, 
+        type === 'profile' ? 'avatars' : 'banners'
+      )
       
-      setTimeout(() => {
+      if (uploadResult.success) {
+        // Update the image URL in state
         if (type === 'profile') {
-          setProfileImage(imageUrl)
+          setProfileImage(uploadResult.url)
         } else {
-          setBannerImage(imageUrl)
+          setBannerImage(uploadResult.url)
         }
-        setIsUploading(false)
-      }, 1000) // Simulate upload delay
+        
+        // Call the appropriate API to update the profile
+        const updateData = type === 'profile' 
+          ? { avatar: uploadResult.url }
+          : { banner_image: uploadResult.url }
+        
+        const apiCall = type === 'profile' 
+          ? services.updateAvatar(updateData)
+          : services.updateBanner(updateData)
+        
+        await apiCall
+        
+        alert(`${type === 'profile' ? 'Avatar' : 'Banner'} updated successfully!`)
+      } else {
+        alert(`Failed to upload ${type === 'profile' ? 'avatar' : 'banner'}: ${uploadResult.message}`)
+      }
+    } catch (error) {
+      console.error('Image upload error:', error)
+      alert(`Failed to upload ${type === 'profile' ? 'avatar' : 'banner'}. Please try again.`)
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -151,10 +269,147 @@ const EditProfile = ({ onClose, onSave }) => {
     }))
   }
 
-  const handleSaveProfile = () => {
-    console.log('Saving profile:', profileData)
-    // Here you would typically make an API call to save the profile
-    alert('Profile updated successfully!')
+  const handleSaveProfile = async () => {
+    setIsSaving(true)
+    setSaveError('')
+
+    try {
+      if (activeTab === 'hours') {
+        // Handle business hours update
+        const dayMapping = {
+          monday: 'Monday',
+          tuesday: 'Tuesday',
+          wednesday: 'Wednesday',
+          thursday: 'Thursday',
+          friday: 'Friday',
+          saturday: 'Saturday',
+          sunday: 'Sunday'
+        }
+
+        const businessHoursArray = Object.entries(profileData.businessHours).map(([day, hours]) => {
+          const baseData = {
+            day_of_week: dayMapping[day],
+            is_open: !hours.closed
+          }
+          
+          // Only include time fields if the business is open
+          if (!hours.closed) {
+            baseData.open_time = hours.open
+            baseData.close_time = hours.close
+          }
+          
+          return baseData
+        })
+
+        console.log('Updating business hours:', businessHoursArray)
+
+        const response = await producerServices.updateBusinessHours({
+          business_hours: businessHoursArray
+        })
+        
+        console.log('Business hours updated successfully:', response)
+
+        // Fetch updated profile data and update localStorage
+        try {
+          const profileResponse = await producerServices.getProfile()
+          if (profileResponse.success && profileResponse.data.producer) {
+            const updatedUserData = profileResponse.data.producer
+            localStorage.setItem('userData', JSON.stringify(updatedUserData))
+            console.log('localStorage updated with new profile data:', updatedUserData)
+          }
+        } catch (profileError) {
+          console.error('Failed to fetch updated profile:', profileError)
+          // Don't throw here, the business hours update was successful
+        }
+
+        alert('Business hours updated successfully!')
+      } else if (activeTab === 'business') {
+        // Handle business details update (certifications, specialties, languages)
+        console.log('Updating business details...')
+
+        // Update certifications if they exist
+        if (profileData.certifications && profileData.certifications.length > 0) {
+          const certificationsData = {
+            certifications: profileData.certifications.map(cert => 
+              typeof cert === 'string' ? { certification_name: cert } : cert
+            )
+          }
+          console.log('Updating certifications:', certificationsData)
+          await producerServices.updateCertifications(certificationsData)
+        }
+
+        // Update specialties if they exist
+        if (profileData.specialties && profileData.specialties.length > 0) {
+          const specialtiesData = {
+            specialties: profileData.specialties
+          }
+          console.log('Updating specialties:', specialtiesData)
+          await producerServices.updateSpecialties(specialtiesData)
+        }
+
+        // Update languages if they exist
+        if (profileData.languages && profileData.languages.length > 0) {
+          const languagesData = {
+            languages: profileData.languages.map(lang => 
+              typeof lang === 'string' ? { language: lang, proficiency: 'intermediate' } : lang
+            )
+          }
+          console.log('Updating languages:', languagesData)
+          await producerServices.updateLanguages(languagesData)
+        }
+
+        // Fetch updated profile data and update localStorage
+        try {
+          const profileResponse = await producerServices.getProfile()
+          if (profileResponse.success && profileResponse.data.producer) {
+            const updatedUserData = profileResponse.data.producer
+            localStorage.setItem('userData', JSON.stringify(updatedUserData))
+            console.log('localStorage updated with new profile data:', updatedUserData)
+          }
+        } catch (profileError) {
+          console.error('Failed to fetch updated profile:', profileError)
+          // Don't throw here, the business details update was successful
+        }
+
+        alert('Business details updated successfully!')
+      } else {
+        // Handle general profile update (basic info excluding avatar and banner)
+        const updateData = {
+          business_name: profileData.businessName,
+          owner_name: profileData.ownerName,
+          bio: profileData.description,
+          description: profileData.description,
+          location: profileData.location,
+          province: profileData.province,
+          website: profileData.website,
+          established_year: profileData.establishedYear
+          // Note: avatar and banner_image are handled separately via image upload
+        }
+
+        console.log('Saving profile:', updateData)
+
+        const response = await producerServices.updateProfile(updateData)
+        
+        console.log('Profile updated successfully:', response)
+
+        // Update categories if they exist
+        if (profileData.producerCategories && profileData.producerCategories.length > 0) {
+          const categoriesData = {
+            category_ids: profileData.producerCategories
+          }
+          console.log('Updating categories:', categoriesData)
+          await producerServices.updateCategories(categoriesData)
+        }
+
+        alert('Profile updated successfully!')
+      }
+    } catch (error) {
+      console.error('Failed to save:', error)
+      setSaveError(error.message || 'Failed to save changes')
+      alert(`Failed to save changes: ${error.message || 'Unknown error'}`)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const tabs = [
@@ -185,7 +440,7 @@ const EditProfile = ({ onClose, onSave }) => {
               onClick={handleSaveProfile}
               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
-              Save Changes
+              {activeTab === 'hours' ? 'Save Business Hours' : 'Save Changes'}
             </button>
           </div>
         </div>
@@ -252,14 +507,14 @@ const EditProfile = ({ onClose, onSave }) => {
             </div>
             
             <div className="flex-1">
-              <h3 className="text-2xl font-bold text-white mb-2">{profileData.name}</h3>
+              <h3 className="text-2xl font-bold text-white mb-2">{profileData.ownerName}</h3>
               <p className="text-white text-opacity-90">{profileData.businessName}</p>
               <div className="flex items-center space-x-4 mt-2 text-white text-opacity-75 text-sm">
                 <span>{profileData.location}</span>
                 <span>•</span>
-                <span>{profileData.selectedCategories.length > 0 ? 
-                  profileData.selectedCategories.map(catId => 
-                    categories.find(cat => cat.id === catId)?.name || catId
+                <span>{profileData.producerCategories.length > 0 ? 
+                  profileData.producerCategories.map(catId => 
+                    categories.find(cat => cat.numericId === catId)?.name || catId
                   ).join(', ') : 'No categories selected'}</span>
                 <span>•</span>
                 <span>Est. {profileData.establishedYear}</span>
@@ -297,11 +552,11 @@ const EditProfile = ({ onClose, onSave }) => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-primary-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-primary-700 mb-2">Owner Name</label>
                 <input
                   type="text"
-                  value={profileData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  value={profileData.ownerName}
+                  onChange={(e) => handleInputChange('ownerName', e.target.value)}
                   className="w-full border border-primary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
@@ -341,7 +596,7 @@ const EditProfile = ({ onClose, onSave }) => {
                     type="button"
                     onClick={() => toggleCategory(category.id)}
                     className={`p-4 rounded-lg border text-center transition-all duration-200 ${
-                      profileData.selectedCategories.includes(category.id)
+                      profileData.producerCategories.includes(category.numericId)
                         ? 'bg-orange-100 border-orange-300 text-orange-700'
                         : 'bg-white border-primary-200 text-primary-600 hover:border-primary-300 hover:bg-primary-50'
                     }`}
@@ -510,7 +765,8 @@ const EditProfile = ({ onClose, onSave }) => {
                   type="email"
                   value={profileData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full border border-primary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  disabled
+                  className="w-full border border-primary-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-500 cursor-not-allowed focus:outline-none"
                 />
               </div>
               
@@ -520,7 +776,8 @@ const EditProfile = ({ onClose, onSave }) => {
                   type="tel"
                   value={profileData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className="w-full border border-primary-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  disabled
+                  className="w-full border border-primary-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-500 cursor-not-allowed focus:outline-none"
                 />
               </div>
               
@@ -642,9 +899,17 @@ const EditProfile = ({ onClose, onSave }) => {
 
       {/* Save Button (Sticky) */}
       <div className="bg-white rounded-xl shadow-sm border border-primary-200 p-4">
+        {saveError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700 text-sm">{saveError}</p>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <p className="text-sm text-primary-600">
-            Make sure to save your changes before leaving this page.
+            {activeTab === 'hours' 
+              ? 'Make sure to save your business hours before leaving this page.'
+              : 'Make sure to save your changes before leaving this page.'
+            }
           </p>
           <div className="flex items-center space-x-3">
             <button
@@ -655,9 +920,10 @@ const EditProfile = ({ onClose, onSave }) => {
             </button>
             <button
               onClick={handleSaveProfile}
-              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              disabled={isSaving}
+              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:bg-primary-300 disabled:cursor-not-allowed"
             >
-              Save Changes
+              {isSaving ? 'Saving...' : (activeTab === 'hours' ? 'Save Business Hours' : activeTab === 'business' ? 'Save Business Details' : 'Save Changes')}
             </button>
           </div>
         </div>

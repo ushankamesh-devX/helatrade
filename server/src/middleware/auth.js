@@ -1,323 +1,185 @@
 const jwt = require('jsonwebtoken');
-const { getOne } = require('../config/database');
+const User = require('../models/User');
 
-class AuthMiddleware {
-  /**
-   * Generic JWT authentication middleware
-   */
-  static authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
+// Middleware to authenticate JWT tokens
+const authenticateToken = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        error: 'Access Denied',
-        message: 'No token provided'
+        message: 'Access token required'
       });
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'helatrade_jwt_secret');
-      req.user = decoded;
-      next();
-    } catch (error) {
-      console.error('Token verification error:', error);
-      
-      if (error.name === 'TokenExpiredError') {
-        return res.status(401).json({
-          success: false,
-          error: 'Token Expired',
-          message: 'Your session has expired. Please login again.'
-        });
-      }
-      
-      if (error.name === 'JsonWebTokenError') {
-        return res.status(403).json({
-          success: false,
-          error: 'Invalid Token',
-          message: 'Invalid token provided'
-        });
-      }
-
-      return res.status(500).json({
+    // Verify token
+    const decoded = User.verifyToken(token);
+    
+    // Get user from database to ensure they still exist and are active
+    const user = await User.findById(decoded.id);
+    
+    if (!user) {
+      return res.status(401).json({
         success: false,
-        error: 'Authentication Error',
-        message: 'Failed to authenticate token'
+        message: 'User not found or inactive'
       });
     }
+
+    if (user.status !== 'active') {
+      return res.status(401).json({
+        success: false,
+        message: 'Account is not active'
+      });
+    }
+
+    // Add user to request object
+    req.user = user;
+    next();
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      message: 'Invalid or expired token'
+    });
+  }
+};
+
+// Middleware to authorize specific user types
+const authorizeUserType = (...allowedTypes) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    if (!allowedTypes.includes(req.user.user_type)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Insufficient permissions'
+      });
+    }
+
+    next();
+  };
+};
+
+// Middleware to check if user is verified
+const requireVerification = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required'
+    });
   }
 
-  /**
-   * Store-specific authentication middleware
-   */
-  static async authenticateStore(req, res, next) {
-    try {
-      // First authenticate the token
-      AuthMiddleware.authenticateToken(req, res, async (error) => {
-        if (error) return;
-
-        // Check if the token is for a store
-        if (req.user.type !== 'store') {
-          return res.status(403).json({
-            success: false,
-            error: 'Access Forbidden',
-            message: 'Store access required'
-          });
-        }
-
-        // Verify store exists and is active
-        const query = 'SELECT id, email, status FROM stores WHERE id = ?';
-        const store = await getOne(query, [req.user.storeId]);
-
-        if (!store) {
-          return res.status(404).json({
-            success: false,
-            error: 'Store Not Found',
-            message: 'Store account not found'
-          });
-        }
-
-        if (store.status !== 'active') {
-          return res.status(403).json({
-            success: false,
-            error: 'Account Inactive',
-            message: 'Store account is not active'
-          });
-        }
-
-        // Add store info to request
-        req.store = req.user;
-        req.storeData = store;
-        next();
-      });
-    } catch (error) {
-      console.error('Store authentication error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Authentication Error',
-        message: 'Failed to authenticate store'
-      });
-    }
+  if (!req.user.is_verified) {
+    return res.status(403).json({
+      success: false,
+      message: 'Email verification required'
+    });
   }
 
-  /**
-   * Producer-specific authentication middleware
-   */
-  static async authenticateProducer(req, res, next) {
-    try {
-      // First authenticate the token
-      AuthMiddleware.authenticateToken(req, res, async (error) => {
-        if (error) return;
+  next();
+};
 
-        // Check if the token is for a producer
-        if (req.user.type !== 'producer') {
-          return res.status(403).json({
-            success: false,
-            error: 'Access Forbidden',
-            message: 'Producer access required'
-          });
-        }
-
-        // Verify producer exists and is active
-        const query = 'SELECT id, email, status FROM producers WHERE id = ?';
-        const producer = await getOne(query, [req.user.producerId]);
-
-        if (!producer) {
-          return res.status(404).json({
-            success: false,
-            error: 'Producer Not Found',
-            message: 'Producer account not found'
-          });
-        }
-
-        if (producer.status !== 'active') {
-          return res.status(403).json({
-            success: false,
-            error: 'Account Inactive',
-            message: 'Producer account is not active'
-          });
-        }
-
-        // Add producer info to request
-        req.producer = req.user;
-        req.producerData = producer;
-        next();
-      });
-    } catch (error) {
-      console.error('Producer authentication error:', error);
-      return res.status(500).json({
+// Middleware to check if user owns the resource
+const requireOwnership = (userIdField = 'user_id') => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
         success: false,
-        error: 'Authentication Error',
-        message: 'Failed to authenticate producer'
+        message: 'Authentication required'
       });
     }
-  }
 
-  /**
-   * Admin authentication middleware
-   */
-  static async authenticateAdmin(req, res, next) {
-    try {
-      // First authenticate the token
-      AuthMiddleware.authenticateToken(req, res, async (error) => {
-        if (error) return;
-
-        // Check if the token is for an admin
-        if (req.user.type !== 'admin') {
-          return res.status(403).json({
-            success: false,
-            error: 'Access Forbidden',
-            message: 'Admin access required'
-          });
-        }
-
-        // Add admin info to request
-        req.admin = req.user;
-        next();
-      });
-    } catch (error) {
-      console.error('Admin authentication error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Authentication Error',
-        message: 'Failed to authenticate admin'
-      });
-    }
-  }
-
-  /**
-   * Optional authentication middleware - doesn't fail if no token
-   */
-  static optionalAuth(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-      req.user = null;
+    // Get user ID from params or body
+    const resourceUserId = req.params[userIdField] || req.body[userIdField];
+    
+    // Admin can access any resource
+    if (req.user.user_type === 'admin') {
       return next();
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'helatrade_jwt_secret');
-      req.user = decoded;
-    } catch (error) {
-      req.user = null;
-    }
-
-    next();
-  }
-
-  /**
-   * Check if user owns the resource (for stores/producers)
-   */
-  static checkResourceOwnership(resourceIdParam = 'id') {
-    return (req, res, next) => {
-      const resourceId = req.params[resourceIdParam];
-      
-      // For stores
-      if (req.store && req.store.storeId === resourceId) {
-        return next();
-      }
-      
-      // For producers
-      if (req.producer && req.producer.producerId === resourceId) {
-        return next();
-      }
-      
-      // For admins - they can access any resource
-      if (req.admin) {
-        return next();
-      }
-
+    // User can only access their own resources
+    if (parseInt(resourceUserId) !== req.user.id) {
       return res.status(403).json({
         success: false,
-        error: 'Access Forbidden',
-        message: 'You can only access your own resources'
-      });
-    };
-  }
-
-  /**
-   * Rate limiting middleware for sensitive operations
-   */
-  static rateLimit(windowMs = 15 * 60 * 1000, maxAttempts = 5) {
-    const attempts = new Map();
-
-    return (req, res, next) => {
-      const clientId = req.ip + (req.user ? req.user.email : '');
-      const now = Date.now();
-      
-      // Clean old entries
-      for (const [key, data] of attempts.entries()) {
-        if (now - data.firstAttempt > windowMs) {
-          attempts.delete(key);
-        }
-      }
-
-      const clientAttempts = attempts.get(clientId);
-      
-      if (!clientAttempts) {
-        attempts.set(clientId, { count: 1, firstAttempt: now });
-        return next();
-      }
-
-      if (clientAttempts.count >= maxAttempts) {
-        return res.status(429).json({
-          success: false,
-          error: 'Too Many Requests',
-          message: 'Too many attempts. Please try again later.',
-          retryAfter: Math.ceil((clientAttempts.firstAttempt + windowMs - now) / 1000)
-        });
-      }
-
-      clientAttempts.count++;
-      next();
-    };
-  }
-
-  /**
-   * Verify email middleware (checks if user's email is verified)
-   */
-  static requireEmailVerification(req, res, next) {
-    // For stores
-    if (req.storeData && !req.storeData.email_verified) {
-      return res.status(403).json({
-        success: false,
-        error: 'Email Verification Required',
-        message: 'Please verify your email address to access this feature'
-      });
-    }
-
-    // For producers
-    if (req.producerData && !req.producerData.email_verified) {
-      return res.status(403).json({
-        success: false,
-        error: 'Email Verification Required',
-        message: 'Please verify your email address to access this feature'
+        message: 'Access denied. You can only access your own resources'
       });
     }
 
     next();
+  };
+};
+
+// Middleware for admin only access
+const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required'
+    });
   }
 
-  /**
-   * Generate JWT token helper function
-   */
-  static generateToken(payload, expiresIn = '24h') {
-    return jwt.sign(payload, process.env.JWT_SECRET || 'helatrade_jwt_secret', { expiresIn });
+  if (req.user.user_type !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin access required'
+    });
   }
 
-  /**
-   * Verify token helper function
-   */
-  static verifyToken(token) {
-    try {
-      return jwt.verify(token, process.env.JWT_SECRET || 'helatrade_jwt_secret');
-    } catch (error) {
-      return null;
+  next();
+};
+
+// Middleware for producer only access
+const requireProducer = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required'
+    });
+  }
+
+  if (req.user.user_type !== 'producer') {
+    return res.status(403).json({
+      success: false,
+      message: 'Producer access required'
+    });
+  }
+
+  next();
+};
+
+// Optional authentication (doesn't fail if no token)
+const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token) {
+      const decoded = User.verifyToken(token);
+      const user = await User.findById(decoded.id);
+      
+      if (user && user.status === 'active') {
+        req.user = user;
+      }
     }
+  } catch (error) {
+    // Continue without authentication if token is invalid
   }
-}
+  
+  next();
+};
 
-module.exports = AuthMiddleware;
+module.exports = {
+  authenticateToken,
+  authorizeUserType,
+  requireVerification,
+  requireOwnership,
+  requireAdmin,
+  requireProducer,
+  optionalAuth
+};
