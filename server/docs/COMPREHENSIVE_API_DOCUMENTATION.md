@@ -471,318 +471,313 @@ PATCH /api/categories/3/restore
 - `GET /producers/debug/producer-data` - Debug producer data
 - `GET /producers/debug/user-check` - Debug user authentication
 
-## Producer Data Structures
+---
 
-### Producer Profile Object
+# Posts API
+
+## Endpoints Overview
+
+### Public Endpoints
+- `GET /posts` - Get all posts with optional filtering
+- `GET /posts/:id` - Get post by ID
+- `GET /posts/producer/:producerId` - Get posts by producer
+- `GET /posts/:id/images` - Get post images
+
+### Producer-Only Endpoints (Require Authentication)
+- `POST /posts` - Create new post
+- `PUT /posts/:id` - Update post
+- `DELETE /posts/:id` - Delete post
+- `POST /posts/:id/images` - Add images to post
+- `PUT /posts/:id/images` - Update post images (replace all)
+- `DELETE /posts/:id/images/:imageId` - Remove image from post
+
+## Post Data Structures
+
+### Post Object
 ```json
 {
   "id": 1,
-  "user_id": 5,
-  "email": "producer@example.com",
-  "user_type": "producer",
-  "is_verified": false,
-  "phone_verified": false,
-  "status": "active",
-  "producer_id": 1,
-  "business_name": "Green Farm Solutions",
-  "owner_name": "John Doe",
-  "bio": "Organic farming specialist",
-  "description": "We specialize in organic vegetables and fruits",
-  "location": "Colombo, Sri Lanka",
-  "province": "Western",
-  "website": "https://greenfarm.lk",
-  "established_year": 2020,
-  "avatar": "avatar_url.jpg",
-  "banner_image": "banner_url.jpg",
-  "verified": false,
-  "featured": false,
-  "total_views": 0,
-  "total_likes": 0,
-  "total_connections": 0,
-  "rating": 0,
-  "categories": [],
-  "business_hours": [],
-  "certifications": [],
-  "languages": [],
-  "social_media": [],
-  "specialties": []
+  "producer_id": 5,
+  "content": "Fresh organic vegetables harvested today from our farm!",
+  "category_id": 1,
+  "category_name": "Vegetables",
+  "category_slug": "vegetables",
+  "status": "published",
+  "is_trending": false,
+  "is_featured": false,
+  "total_views": 25,
+  "total_likes": 5,
+  "total_comments": 2,
+  "total_shares": 1,
+  "popularity_score": 17,
+  "created_at": "2023-01-01T10:00:00.000Z",
+  "updated_at": "2023-01-01T10:00:00.000Z",
+  "images": []
 }
 ```
 
-### Business Hours Object
+### Post Image Object
 ```json
 {
   "id": 1,
-  "producer_id": 1,
-  "day_of_week": 1,
-  "is_open": true,
-  "open_time": "08:00:00",
-  "close_time": "17:00:00"
+  "post_id": 1,
+  "image_url": "https://example.com/image.jpg",
+  "alt_text": "Fresh vegetables",
+  "display_order": 0,
+  "created_at": "2023-01-01T10:00:00.000Z"
 }
 ```
 
-### Certification Object
-```json
-{
-  "id": 1,
-  "producer_id": 1,
-  "certification_name": "Organic Certification",
-  "issuing_body": "Sri Lanka Standards Institute",
-  "issue_date": "2023-01-01",
-  "expiry_date": "2024-01-01",
-  "certificate_url": "https://example.com/cert.pdf"
-}
-```
+## Posts API Endpoints
 
-### Language Object
-```json
-{
-  "id": 1,
-  "producer_id": 1,
-  "language": "English",
-  "proficiency_level": "fluent"
-}
-```
-
-### Social Media Object
-```json
-{
-  "id": 1,
-  "producer_id": 1,
-  "platform": "facebook",
-  "profile_url": "https://facebook.com/greenfarm",
-  "username": "greenfarm"
-}
-```
-
-### Specialty Object
-```json
-{
-  "id": 1,
-  "producer_id": 1,
-  "specialty_name": "Organic Farming",
-  "description": "Specializes in chemical-free organic farming methods",
-  "years_of_experience": 5
-}
-```
-
-## Producer Authentication & Registration
-
-### POST /producers/register
-Register a new producer account.
+### GET /posts
+Retrieve all posts with optional filtering and pagination.
 
 **Authentication:** None required
+
+**Query Parameters:**
+- `page` (integer, optional): Page number (default: 1)
+- `limit` (integer, optional): Items per page (default: 20, max: 50)
+- `producer_id` (integer, optional): Filter by producer ID
+- `category_id` (integer, optional): Filter by category ID
+- `is_featured` (boolean, optional): Filter by featured status ("true" or "false")
+- `is_trending` (boolean, optional): Filter by trending status ("true" or "false")
+- `search` (string, optional): Search in post content
+- `orderBy` (string, optional): Sort field (default: "created_at")
+- `orderDirection` (string, optional): Sort direction ("ASC" or "DESC", default: "DESC")
+
+**Request Example:**
+```http
+GET /api/posts?page=1&limit=10&category_id=1&is_featured=true
+```
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "message": "Posts retrieved successfully",
+  "data": {
+    "posts": [
+      {
+        "id": 1,
+        "producer_id": 5,
+        "content": "Fresh organic vegetables harvested today!",
+        "category_id": 1,
+        "category_name": "Vegetables",
+        "status": "published",
+        "total_views": 25,
+        "total_likes": 5,
+        "created_at": "2023-01-01T10:00:00.000Z",
+        "images": [
+          {
+            "id": 1,
+            "image_url": "https://example.com/veggies.jpg",
+            "alt_text": "Fresh vegetables",
+            "display_order": 0
+          }
+        ]
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 1
+    }
+  }
+}
+```
+
+### GET /posts/:id
+Get a specific post by ID.
+
+**Authentication:** None required
+
+**Path Parameters:**
+- `id` (integer, required): Post ID
+
+**Request Example:**
+```http
+GET /api/posts/1
+```
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "message": "Post retrieved successfully",
+  "data": {
+    "post": {
+      "id": 1,
+      "producer_id": 5,
+      "content": "Fresh organic vegetables harvested today!",
+      "category_id": 1,
+      "status": "published",
+      "total_views": 26,
+      "total_likes": 5,
+      "created_at": "2023-01-01T10:00:00.000Z",
+      "images": []
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `404 Not Found`: Post not found
+
+### GET /posts/producer/:producerId
+Get all posts by a specific producer.
+
+**Authentication:** None required
+
+**Path Parameters:**
+- `producerId` (integer, required): Producer ID
+
+**Query Parameters:**
+- `page` (integer, optional): Page number (default: 1)
+- `limit` (integer, optional): Items per page (default: 20)
+- `status` (string, optional): Filter by status ("draft", "published", "archived")
+- `orderBy` (string, optional): Sort field (default: "created_at")
+- `orderDirection` (string, optional): Sort direction ("ASC" or "DESC")
+
+**Request Example:**
+```http
+GET /api/posts/producer/5?page=1&limit=10&status=published
+```
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "message": "Producer posts retrieved successfully",
+  "data": {
+    "posts": [
+      {
+        "id": 1,
+        "content": "Fresh organic vegetables harvested today!",
+        "status": "published",
+        "total_views": 25,
+        "created_at": "2023-01-01T10:00:00.000Z",
+        "images": []
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 1
+    }
+  }
+}
+```
+
+### POST /posts
+Create a new post.
+
+**Authentication:** Required (Producer)
 
 **Request Body:**
 ```json
 {
-  "email": "producer@example.com",
-  "password": "securePassword123",
-  "phone": "+94771234567",
-  "business_name": "Green Farm Solutions",
-  "owner_name": "John Doe",
-  "bio": "Organic farming specialist",
-  "description": "We specialize in organic vegetables and fruits",
-  "location": "Colombo, Sri Lanka",
-  "province": "Western",
-  "website": "https://greenfarm.lk",
-  "established_year": 2020,
-  "avatar": "avatar_url.jpg",
-  "banner_image": "banner_url.jpg",
-  "category_ids": [1, 2],
-  "business_hours": [
+  "content": "Fresh organic vegetables harvested today from our farm!",
+  "category_id": 1,
+  "status": "published",
+  "images": [
     {
-      "day_of_week": 1,
-      "is_open": true,
-      "open_time": "08:00",
-      "close_time": "17:00"
-    }
-  ],
-  "certifications": [
-    {
-      "certification_name": "Organic Certification",
-      "issuing_body": "Sri Lanka Standards Institute",
-      "issue_date": "2023-01-01",
-      "expiry_date": "2024-01-01"
-    }
-  ],
-  "languages": [
-    {
-      "language": "English",
-      "proficiency": "advanced"
-    },
-    {
-      "language": "Sinhala",
-      "proficiency": "native"
-    }
-  ],
-  "social_media": [
-    {
-      "platform": "facebook",
-      "profile_url": "https://facebook.com/greenfarm"
-    }
-  ],
-  "specialties": [
-    {
-      "specialty_name": "Organic Farming",
-      "years_of_experience": 5
+      "image_url": "https://example.com/veggies.jpg",
+      "alt_text": "Fresh vegetables",
+      "display_order": 0
     }
   ]
 }
 ```
 
 **Required Fields:**
-- `email`: Valid email address
-- `password`: Strong password
-- `business_name`: Business name
-- `owner_name`: Owner's name
+- `content`: Post content (1-5000 characters)
 
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Producer registered successfully",
-  "data": {
-    "user": {
-      "id": 1,
-      "email": "producer@example.com",
-      "user_type": "producer",
-      "business_name": "Green Farm Solutions",
-      "owner_name": "John Doe",
-      // ... other fields
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
-
-### POST /producers/login
-Login for existing producers.
-
-**Authentication:** None required
-
-**Request Body:**
-```json
-{
-  "email": "producer@example.com",
-  "password": "securePassword123"
-}
-```
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "user": {
-      "id": 1,
-      "email": "producer@example.com",
-      "user_type": "producer",
-      // ... producer details
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
-
-## Producer Profile Management
-
-### GET /producers/profile
-Get the authenticated producer's profile.
-
-**Authentication:** Required (Producer)
+**Optional Fields:**
+- `category_id`: Category ID
+- `status`: "draft", "published", or "archived" (default: "published")
+- `images`: Array of image objects
 
 **Request Example:**
 ```http
-GET /api/producers/profile
+POST /api/posts
 Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "content": "Check out our new harvest of organic tomatoes!",
+  "category_id": 1,
+  "status": "published",
+  "images": [
+    {
+      "image_url": "https://example.com/tomatoes.jpg",
+      "alt_text": "Ripe organic tomatoes"
+    }
+  ]
+}
 ```
 
 **Response Example:**
 ```json
 {
   "success": true,
-  "message": "Profile retrieved successfully",
+  "message": "Post created successfully",
   "data": {
-    "producer": {
-      "id": 1,
-      "business_name": "Green Farm Solutions",
-      "owner_name": "John Doe",
-      "bio": "Organic farming specialist",
-      "categories": [
+    "post": {
+      "id": 2,
+      "producer_id": 5,
+      "content": "Check out our new harvest of organic tomatoes!",
+      "category_id": 1,
+      "status": "published",
+      "total_views": 0,
+      "total_likes": 0,
+      "created_at": "2023-01-01T11:00:00.000Z",
+      "images": [
         {
-          "id": 1,
-          "name": "Agriculture"
-        }
-      ],
-      "business_hours": [
-        {
-          "day_of_week": 1,
-          "is_open": true,
-          "open_time": "08:00:00",
-          "close_time": "17:00:00"
+          "id": 2,
+          "image_url": "https://example.com/tomatoes.jpg",
+          "alt_text": "Ripe organic tomatoes",
+          "display_order": 0
         }
       ]
-      // ... other fields
     }
   }
 }
 ```
 
-### GET /producers/profile/:id
-Get a producer's public profile by ID.
+**Error Responses:**
+- `400 Bad Request`: Validation errors
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Producer access required
 
-**Authentication:** Optional
+### PUT /posts/:id
+Update an existing post.
+
+**Authentication:** Required (Producer - own posts only)
 
 **Path Parameters:**
-- `id` (integer, required): Producer ID
-
-**Request Example:**
-```http
-GET /api/producers/profile/1
-```
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Producer profile retrieved successfully",
-  "data": {
-    "producer": {
-      "id": 1,
-      "business_name": "Green Farm Solutions",
-      "owner_name": "John Doe",
-      "bio": "Organic farming specialist",
-      "location": "Colombo, Sri Lanka",
-      "verified": false,
-      "rating": 4.5,
-      "total_views": 150,
-      "categories": []
-      // ... public fields only
-    }
-  }
-}
-```
-
-### PUT /producers/profile
-Update the authenticated producer's profile.
-
-**Authentication:** Required (Producer)
+- `id` (integer, required): Post ID
 
 **Request Body:** (All fields optional)
 ```json
 {
-  "business_name": "Updated Business Name",
-  "owner_name": "Updated Owner Name",
-  "bio": "Updated bio",
-  "description": "Updated description",
-  "location": "Updated location",
-  "province": "Updated province",
-  "website": "https://updated-website.com",
-  "established_year": 2021,
-  "avatar": "new_avatar_url.jpg",
-  "banner_image": "new_banner_url.jpg"
+  "content": "Updated post content",
+  "category_id": 2,
+  "status": "published",
+  "is_trending": false,
+  "is_featured": false
+}
+```
+
+**Request Example:**
+```http
+PUT /api/posts/1
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "content": "Updated: Fresh organic vegetables harvested today!",
+  "category_id": 1
 }
 ```
 
@@ -790,93 +785,118 @@ Update the authenticated producer's profile.
 ```json
 {
   "success": true,
-  "message": "Profile updated successfully",
+  "message": "Post updated successfully",
   "data": {
-    "producer": {
+    "post": {
       "id": 1,
-      "business_name": "Updated Business Name",
-      // ... updated fields
+      "content": "Updated: Fresh organic vegetables harvested today!",
+      "category_id": 1,
+      "updated_at": "2023-01-01T11:30:00.000Z"
     }
   }
 }
 ```
 
-### GET /producers/
-Get all producers (public listing with pagination and filtering).
+**Error Responses:**
+- `400 Bad Request`: Validation errors
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Can only update own posts
+- `404 Not Found`: Post not found
+
+### DELETE /posts/:id
+Delete a post.
+
+**Authentication:** Required (Producer - own posts only)
+
+**Path Parameters:**
+- `id` (integer, required): Post ID
+
+**Request Example:**
+```http
+DELETE /api/posts/1
+Authorization: Bearer <token>
+```
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "message": "Post deleted successfully"
+}
+```
+
+**Error Responses:**
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Can only delete own posts
+- `404 Not Found`: Post not found
+
+### GET /posts/:id/images
+Get all images for a specific post.
 
 **Authentication:** None required
 
-**Query Parameters:**
-- `page` (integer, optional): Page number (default: 1)
-- `limit` (integer, optional): Items per page (default: 10, max: 50)
-- `category` (integer, optional): Filter by category ID
-- `province` (string, optional): Filter by province
-- `verified` (boolean, optional): Filter by verification status
+**Path Parameters:**
+- `id` (integer, required): Post ID
 
 **Request Example:**
 ```http
-GET /api/producers?page=1&limit=10&category=1&verified=true
+GET /api/posts/1/images
 ```
 
 **Response Example:**
 ```json
 {
   "success": true,
-  "message": "Producers retrieved successfully",
+  "message": "Post images retrieved successfully",
   "data": {
-    "producers": [
+    "images": [
       {
         "id": 1,
-        "business_name": "Green Farm Solutions",
-        "location": "Colombo, Sri Lanka",
-        "verified": true,
-        "rating": 4.5
-        // ... public fields
-      }
-    ],
-    "pagination": {
-      "currentPage": 1,
-      "totalPages": 5,
-      "totalItems": 45,
-      "itemsPerPage": 10
-    }
-  }
-}
-```
-
-## Categories Management
-
-### GET /producers/profile/categories
-Get the authenticated producer's categories.
-
-**Authentication:** Required (Producer)
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Producer categories retrieved successfully",
-  "data": {
-    "categories": [
-      {
-        "id": 1,
-        "name": "Agriculture",
-        "slug": "agriculture"
+        "post_id": 1,
+        "image_url": "https://example.com/veggies.jpg",
+        "alt_text": "Fresh vegetables",
+        "display_order": 0,
+        "created_at": "2023-01-01T10:00:00.000Z"
       }
     ]
   }
 }
 ```
 
-### PUT /producers/profile/categories
-Update producer's categories (replace all existing categories).
+### POST /posts/:id/images
+Add images to an existing post.
 
-**Authentication:** Required (Producer)
+**Authentication:** Required (Producer - own posts only)
+
+**Path Parameters:**
+- `id` (integer, required): Post ID
 
 **Request Body:**
 ```json
 {
-  "category_ids": [1, 2, 3]
+  "images": [
+    {
+      "image_url": "https://example.com/image2.jpg",
+      "alt_text": "Second image",
+      "display_order": 1
+    }
+  ]
+}
+```
+
+**Request Example:**
+```http
+POST /api/posts/1/images
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "images": [
+    {
+      "image_url": "https://example.com/additional.jpg",
+      "alt_text": "Additional harvest photo"
+    }
+  ]
 }
 ```
 
@@ -884,355 +904,227 @@ Update producer's categories (replace all existing categories).
 ```json
 {
   "success": true,
-  "message": "Categories updated successfully",
+  "message": "Images added successfully",
   "data": {
-    "categories": [
+    "images": [
       {
         "id": 1,
-        "name": "Agriculture"
+        "image_url": "https://example.com/veggies.jpg",
+        "alt_text": "Fresh vegetables",
+        "display_order": 0
       },
       {
-        "id": 2,
-        "name": "Organic Products"
+        "id": 3,
+        "image_url": "https://example.com/additional.jpg",
+        "alt_text": "Additional harvest photo",
+        "display_order": 1
       }
     ]
   }
 }
 ```
 
-### POST /producers/profile/categories/:categoryId
-Add a single category to producer.
+### PUT /posts/:id/images
+Replace all images for a post.
 
-**Authentication:** Required (Producer)
+**Authentication:** Required (Producer - own posts only)
 
 **Path Parameters:**
-- `categoryId` (integer, required): Category ID
+- `id` (integer, required): Post ID
+
+**Request Body:**
+```json
+{
+  "images": [
+    {
+      "image_url": "https://example.com/new-image.jpg",
+      "alt_text": "New image",
+      "display_order": 0
+    }
+  ]
+}
+```
 
 **Response Example:**
 ```json
 {
   "success": true,
-  "message": "Category added successfully"
+  "message": "Images updated successfully",
+  "data": {
+    "images": [
+      {
+        "id": 4,
+        "image_url": "https://example.com/new-image.jpg",
+        "alt_text": "New image",
+        "display_order": 0
+      }
+    ]
+  }
 }
 ```
 
-### DELETE /producers/profile/categories/:categoryId
-Remove a category from producer.
+### DELETE /posts/:id/images/:imageId
+Remove a specific image from a post.
 
-**Authentication:** Required (Producer)
+**Authentication:** Required (Producer - own posts only)
 
 **Path Parameters:**
-- `categoryId` (integer, required): Category ID
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Category removed successfully"
-}
-```
-
-## Business Hours Management
-
-### GET /producers/profile/business-hours
-Get producer's business hours.
-
-**Authentication:** Required
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Business hours retrieved successfully",
-  "data": {
-    "business_hours": [
-      {
-        "id": 1,
-        "day_of_week": 1,
-        "is_open": true,
-        "open_time": "08:00:00",
-        "close_time": "17:00:00"
-      }
-    ]
-  }
-}
-```
-
-### PUT /producers/profile/business-hours
-Update producer's business hours.
-
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "business_hours": [
-    {
-      "day_of_week": 1,
-      "is_open": true,
-      "open_time": "08:00",
-      "close_time": "17:00"
-    },
-    {
-      "day_of_week": 2,
-      "is_open": false
-    }
-  ]
-}
-```
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Business hours updated successfully",
-  "data": {
-    "business_hours": [
-      {
-        "id": 1,
-        "day_of_week": 1,
-        "is_open": true,
-        "open_time": "08:00:00",
-        "close_time": "17:00:00"
-      }
-    ]
-  }
-}
-```
-
-## Certifications Management
-
-### GET /producers/profile/certifications
-Get producer's certifications.
-
-**Authentication:** Required
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Certifications retrieved successfully",
-  "data": {
-    "certifications": [
-      {
-        "id": 1,
-        "certification_name": "Organic Certification",
-        "issuing_body": "Sri Lanka Standards Institute",
-        "issue_date": "2023-01-01T00:00:00.000Z",
-        "expiry_date": "2024-01-01T00:00:00.000Z",
-        "certificate_url": "https://example.com/cert.pdf"
-      }
-    ]
-  }
-}
-```
-
-### PUT /producers/profile/certifications
-Update all certifications (replace existing).
-
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "certifications": [
-    {
-      "certification_name": "Organic Certification",
-      "issuing_body": "Sri Lanka Standards Institute",
-      "issue_date": "2023-01-01",
-      "expiry_date": "2024-01-01",
-      "certificate_url": "https://example.com/cert.pdf"
-    }
-  ]
-}
-```
-
-### POST /producers/profile/certifications
-Add a new certification.
-
-**Authentication:** Required
-
-**Request Body:**
-```json
-{
-  "certification_name": "Fair Trade Certification",
-  "issuing_body": "Fair Trade International",
-  "issue_date": "2023-06-01",
-  "expiry_date": "2024-06-01"
-}
-```
-
-## Languages Management
-
-### GET /producers/profile/languages
-Get producer's languages.
-
-**Authentication:** Required (Producer)
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Languages retrieved successfully",
-  "data": {
-    "languages": [
-      {
-        "id": 1,
-        "language": "English",
-        "proficiency": "advanced"
-      }
-    ]
-  }
-}
-```
-
-### PUT /producers/profile/languages
-Update producer's languages (replace all existing).
-
-**Authentication:** Required (Producer)
-
-**Request Body:**
-```json
-{
-  "languages": [
-    {
-      "language": "English",
-      "proficiency": "advanced"
-    },
-    {
-      "language": "Sinhala",
-      "proficiency": "native"
-    }
-  ]
-}
-```
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Languages updated successfully",
-  "data": {
-    "languages": [
-      {
-        "id": 1,
-        "language": "English",
-        "proficiency": "advanced"
-      }
-    ]
-  }
-}
-```
-
-### POST /producers/profile/languages
-Add a new language.
-
-**Authentication:** Required (Producer)
-
-**Request Body:**
-```json
-{
-  "language": "Tamil",
-  "proficiency": "intermediate"
-}
-```
-
-**Response Example:**
-```json
-{
-  "success": true,
-  "message": "Language added successfully",
-  "data": { "languageId": 3 }
-}
-```
-
-## Avatar Management
-
-### PUT /producers/profile/avatar
-Update producer's avatar image URL.
-
-**Authentication:** Required (Producer)
-
-**Request Body:**
-```json
-{
-  "avatar": "https://example.com/avatar.jpg"
-}
-```
-
-**Validation Rules:**
-- `avatar`: Required, valid URL, max 255 characters
+- `id` (integer, required): Post ID
+- `imageId` (integer, required): Image ID
 
 **Request Example:**
 ```http
-PUT /api/producers/profile/avatar
+DELETE /api/posts/1/images/2
 Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "avatar": "https://example.com/new-avatar.jpg"
-}
 ```
 
 **Response Example:**
 ```json
 {
   "success": true,
-  "message": "Avatar updated successfully",
-  "data": {
-    "avatar": "https://example.com/new-avatar.jpg"
-  }
+  "message": "Image removed successfully"
 }
 ```
 
 **Error Responses:**
-- `400 Bad Request`: Invalid URL format or URL too long
 - `401 Unauthorized`: Authentication required
-- `403 Forbidden`: Access denied (not a producer)
-- `404 Not Found`: Producer profile not found
+- `403 Forbidden`: Can only modify own posts
+- `404 Not Found`: Post or image not found
 
-## Banner Management
+---
 
-### PUT /producers/profile/banner
-Update producer's banner image URL.
+# Test Endpoints and Sample Data
 
-**Authentication:** Required (Producer)
+## Authentication Setup
+Before testing posts endpoints, you need to:
 
-**Request Body:**
-```json
-{
-  "banner_image": "https://example.com/banner.jpg"
-}
-```
-
-**Validation Rules:**
-- `banner_image`: Required, valid URL, max 255 characters
-
-**Request Example:**
+1. Register a producer account:
 ```http
-PUT /api/producers/profile/banner
-Authorization: Bearer <token>
+POST /api/producers/register
 Content-Type: application/json
 
 {
-  "banner_image": "https://example.com/new-banner.jpg"
+  "email": "testproducer@example.com",
+  "password": "TestPass123!",
+  "business_name": "Test Farm",
+  "owner_name": "Test Owner"
 }
 ```
 
-**Response Example:**
-```json
+2. Login to get JWT token:
+```http
+POST /api/producers/login
+Content-Type: application/json
+
 {
-  "success": true,
-  "message": "Banner updated successfully",
-  "data": {
-    "banner_image": "https://example.com/new-banner.jpg"
-  }
+  "email": "testproducer@example.com",
+  "password": "TestPass123!"
 }
 ```
 
-**Error Responses:**
-- `400 Bad Request`: Invalid URL format or URL too long
-- `401 Unauthorized`: Authentication required
-- `403 Forbidden`: Access denied (not a producer)
-- `404 Not Found`: Producer profile not found
+Use the returned token in `Authorization: Bearer <token>` header for authenticated requests.
+
+## Sample Test Data
+
+### Create Post
+```http
+POST /api/posts
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "content": "🌱 Just harvested our first batch of organic tomatoes! These beauties were grown using traditional farming methods passed down through generations. Each tomato is hand-picked at peak ripeness for maximum flavor. #OrganicFarming #SriLankanProduce",
+  "category_id": 1,
+  "status": "published",
+  "images": [
+    {
+      "image_url": "https://example.com/tomatoes1.jpg",
+      "alt_text": "Ripe red tomatoes on vine",
+      "display_order": 0
+    },
+    {
+      "image_url": "https://example.com/tomatoes2.jpg",
+      "alt_text": "Close-up of organic tomato",
+      "display_order": 1
+    }
+  ]
+}
 ```
+
+### Update Post
+```http
+PUT /api/posts/1
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "content": "🌱 Just harvested our first batch of organic tomatoes! These beauties were grown using traditional farming methods passed down through generations. Each tomato is hand-picked at peak ripeness for maximum flavor. Now available for pre-order! #OrganicFarming #SriLankanProduce",
+  "is_featured": true
+}
+```
+
+### Get Posts with Filtering
+```http
+GET /api/posts?page=1&limit=5&category_id=1&is_featured=true&orderBy=total_views&orderDirection=DESC
+```
+
+### Add Images to Existing Post
+```http
+POST /api/posts/1/images
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "images": [
+    {
+      "image_url": "https://example.com/harvest-process.jpg",
+      "alt_text": "Harvesting process",
+      "display_order": 2
+    }
+  ]
+}
+```
+
+## Common Test Scenarios
+
+1. **Create post without images**
+2. **Create post with multiple images**
+3. **Update post content and metadata**
+4. **Add images to existing post**
+5. **Replace all images**
+6. **Remove specific image**
+7. **Delete entire post**
+8. **Try to modify another producer's post** (should fail with 403)
+9. **Get posts with various filters**
+10. **Test pagination**
+
+## Error Testing
+
+### Invalid Post Creation
+```http
+POST /api/posts
+Authorization: Bearer <your_token>
+Content-Type: application/json
+
+{
+  "content": "",  // Empty content should fail
+  "category_id": 999 // Non-existent category
+}
+```
+
+### Unauthorized Access
+```http
+PUT /api/posts/1
+// Missing Authorization header should return 401
+```
+
+### Forbidden Access
+```http
+DELETE /api/posts/1
+Authorization: Bearer <different_producer_token>
+// Should return 403 if trying to delete another producer's post
+```
+
+---
+
+This completes the Posts API documentation. The API provides full CRUD operations for posts and post images, with proper authentication and authorization controls.

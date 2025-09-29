@@ -16,6 +16,7 @@ const { testConnection } = require('./src/config/database');
 const categoryRoutes = require('./src/routes/categoryRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const producerRoutes = require('./src/routes/producerRoutes');
+const postRoutes = require('./src/routes/postRoutes');
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -53,6 +54,7 @@ app.use(express.urlencoded({ extended: true, limit: config.MAX_FILE_SIZE }));
 app.use('/api/categories', categoryRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/producers', producerRoutes);
+app.use('/api/posts', postRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -75,7 +77,8 @@ app.get('/api', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       producers: '/api/producers',
-      categories: '/api/categories'
+      categories: '/api/categories',
+      posts: '/api/posts'
     }
   });
 });

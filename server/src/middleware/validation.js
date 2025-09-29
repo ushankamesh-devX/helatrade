@@ -677,6 +677,104 @@ const validateBannerUpdate = [
   handleValidationErrors
 ];
 
+// Validate post creation
+const validatePostCreate = [
+  body('content')
+    .trim()
+    .isLength({ min: 1, max: 5000 })
+    .withMessage('Content is required and must not exceed 5000 characters'),
+  
+  body('category_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Category ID must be a positive integer'),
+  
+  body('status')
+    .optional()
+    .isIn(['draft', 'published', 'archived'])
+    .withMessage('Status must be one of: draft, published, archived'),
+  
+  body('images')
+    .optional()
+    .isArray()
+    .withMessage('Images must be an array'),
+  
+  body('images.*.image_url')
+    .if(body('images').exists())
+    .isURL()
+    .isLength({ max: 255 })
+    .withMessage('Each image URL must be a valid URL and not exceed 255 characters'),
+  
+  body('images.*.alt_text')
+    .if(body('images').exists())
+    .optional()
+    .isLength({ max: 255 })
+    .withMessage('Alt text must not exceed 255 characters'),
+  
+  body('images.*.display_order')
+    .if(body('images').exists())
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Display order must be a non-negative integer'),
+  
+  handleValidationErrors
+];
+
+// Validate post update
+const validatePostUpdate = [
+  body('content')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 5000 })
+    .withMessage('Content must not exceed 5000 characters'),
+  
+  body('category_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Category ID must be a positive integer'),
+  
+  body('status')
+    .optional()
+    .isIn(['draft', 'published', 'archived'])
+    .withMessage('Status must be one of: draft, published, archived'),
+  
+  body('is_trending')
+    .optional()
+    .isBoolean()
+    .withMessage('is_trending must be a boolean'),
+  
+  body('is_featured')
+    .optional()
+    .isBoolean()
+    .withMessage('is_featured must be a boolean'),
+  
+  handleValidationErrors
+];
+
+// Validate post images update
+const validatePostImagesUpdate = [
+  body('images')
+    .isArray()
+    .withMessage('Images must be an array'),
+  
+  body('images.*.image_url')
+    .isURL()
+    .isLength({ max: 255 })
+    .withMessage('Each image URL must be a valid URL and not exceed 255 characters'),
+  
+  body('images.*.alt_text')
+    .optional()
+    .isLength({ max: 255 })
+    .withMessage('Alt text must not exceed 255 characters'),
+  
+  body('images.*.display_order')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Display order must be a non-negative integer'),
+  
+  handleValidationErrors
+];
+
 module.exports = {
   validateUserRegistration,
   validateProducerRegistration,
@@ -690,5 +788,8 @@ module.exports = {
   validateSpecialtiesUpdate,
   validateAvatarUpdate,
   validateBannerUpdate,
+  validatePostCreate,
+  validatePostUpdate,
+  validatePostImagesUpdate,
   handleValidationErrors
 };

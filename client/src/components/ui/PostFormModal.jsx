@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCategories } from '../../hooks/useCategories';
+import { postsAPI } from '../../services/api';
+import { postImageUploadService } from '../../services/postServices';
 
 const PostFormModal = ({ 
   isOpen, 
@@ -10,7 +12,7 @@ const PostFormModal = ({
 }) => {
   const [formData, setFormData] = useState({
     content: '',
-    category: '',
+    category_id: '',
     images: [],
     status: 'published'
   });
@@ -23,9 +25,9 @@ const PostFormModal = ({
   // Transform categories for dropdown
   const categories = React.useMemo(() => {
     if (categoriesLoading || !apiCategories.length) {
-      return ['Vegetables', 'Spices', 'Tea', 'Fruits', 'Coconut Products'];
+      return [];
     }
-    return apiCategories.map(cat => cat.name);
+    return apiCategories;
   }, [apiCategories, categoriesLoading]);
 
   // Pre-fill form when editing
@@ -33,7 +35,7 @@ const PostFormModal = ({
     if (post && mode === 'edit') {
       setFormData({
         content: post.content || '',
-        category: post.category || '',
+        category_id: post.category_id || '',
         images: post.images || [],
         status: post.status || 'published'
       });
@@ -42,7 +44,7 @@ const PostFormModal = ({
       // Reset form for create mode
       setFormData({
         content: '',
-        category: '',
+        category_id: '',
         images: [],
         status: 'published'
       });
@@ -58,24 +60,47 @@ const PostFormModal = ({
     }));
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const newImages = [];
-    const newPreviews = [];
+    const uploadedImages = [];
+    const previewUrls = [];
     
-    files.forEach(file => {
-      if (file.type.startsWith('image/')) {
-        const imageUrl = URL.createObjectURL(file);
-        newImages.push(imageUrl);
-        newPreviews.push(imageUrl);
+    setIsSubmitting(true);
+    
+    try {
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+          // Create preview URL immediately
+          const previewUrl = URL.createObjectURL(file);
+          previewUrls.push(previewUrl);
+          
+          // Upload to BunnyCDN
+          const uploadResult = await postImageUploadService.uploadPostImage(file);
+          
+          if (uploadResult.success) {
+            uploadedImages.push({
+              image_url: uploadResult.url,
+              alt_text: file.name,
+              display_order: uploadedImages.length
+            });
+          } else {
+            console.error('Failed to upload image:', uploadResult.error);
+            // Remove the preview URL for failed uploads
+            previewUrls.pop();
+          }
+        }
       }
-    });
-    
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...newImages]
-    }));
-    setImagePreview(prev => [...prev, ...newPreviews]);
+      
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...uploadedImages]
+      }));
+      setImagePreview(prev => [...prev, ...previewUrls]);
+    } catch (error) {
+      console.error('Error uploading images:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const removeImage = (index) => {
@@ -94,14 +119,29 @@ const PostFormModal = ({
     
     try {
       const postData = {
-        ...formData,
-        id: post?.id || Date.now(), // Use existing ID for edit, generate new for create
+        content: formData.content,
+        category_id: parseInt(formData.category_id),
+        status: formData.status,
+        images: formData.images
       };
       
-      await onSubmit(postData);
-      onClose();
+      let result;
+      if (mode === 'edit' && post?.id) {
+        result = await postsAPI.update(post.id, postData);
+      } else {
+        result = await postsAPI.create(postData);
+      }
+      
+      if (result.success) {
+        // Call the parent onSubmit with the API response
+        await onSubmit(result.data.post);
+        onClose();
+      } else {
+        throw new Error(result.message || 'Failed to save post');
+      }
     } catch (error) {
       console.error('Error submitting post:', error);
+      alert(`Error: ${error.message || 'Failed to save post'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -153,16 +193,16 @@ const PostFormModal = ({
               Category *
             </label>
             <select
-              name="category"
-              value={formData.category}
+              name="category_id"
+              value={formData.category_id}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-primary-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               required
             >
               <option value="">Select a category</option>
               {categories.map(category => (
-                <option key={category} value={category}>
-                  {category}
+                <option key={category.id} value={category.id}>
+                  {category.name}
                 </option>
               ))}
             </select>

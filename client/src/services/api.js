@@ -11,6 +11,12 @@ const apiRequest = async (endpoint, options = {}) => {
     },
   };
 
+  // Add Authorization header if token exists
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    defaultOptions.headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const config = {
     ...defaultOptions,
     ...options,
@@ -334,6 +340,87 @@ export const storesAPI = {
     const queryString = new URLSearchParams(params).toString();
     const endpoint = queryString ? `/stores/featured?${queryString}` : '/stores/featured';
     return apiRequest(endpoint);
+  },
+};
+
+// Posts API
+export const postsAPI = {
+  // Get all posts with optional filtering
+  getAll: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/posts?${queryString}` : '/posts';
+    return apiRequest(endpoint);
+  },
+
+  // Get post by ID
+  getById: async (id) => {
+    return apiRequest(`/posts/${id}`);
+  },
+
+  // Get posts by producer
+  getByProducer: async (producerId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/posts/producer/${producerId}?${queryString}` : `/posts/producer/${producerId}`;
+    return apiRequest(endpoint);
+  },
+
+  // Create new post
+  create: async (postData) => {
+    return apiRequest('/posts', {
+      method: 'POST',
+      body: JSON.stringify(postData),
+    });
+  },
+
+  // Update post
+  update: async (id, postData) => {
+    return apiRequest(`/posts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(postData),
+    });
+  },
+
+  // Delete post
+  delete: async (id) => {
+    return apiRequest(`/posts/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Bulk delete posts
+  bulkDelete: async (postIds) => {
+    return apiRequest('/posts', {
+      method: 'DELETE',
+      body: JSON.stringify({ postIds }),
+    });
+  },
+
+  // Get post images
+  getImages: async (id) => {
+    return apiRequest(`/posts/${id}/images`);
+  },
+
+  // Add images to post
+  addImages: async (id, imagesData) => {
+    return apiRequest(`/posts/${id}/images`, {
+      method: 'POST',
+      body: JSON.stringify(imagesData),
+    });
+  },
+
+  // Update post images (replace all)
+  updateImages: async (id, imagesData) => {
+    return apiRequest(`/posts/${id}/images`, {
+      method: 'PUT',
+      body: JSON.stringify(imagesData),
+    });
+  },
+
+  // Remove image from post
+  removeImage: async (id, imageId) => {
+    return apiRequest(`/posts/${id}/images/${imageId}`, {
+      method: 'DELETE',
+    });
   },
 };
 

@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useCategories } from '../../hooks/useCategories'
+import { postsAPI } from '../../services/api'
+import categoriesService from '../../services/categoriesServices'
 import PostCard from '../ui/PostCard'
 import PostFormModal from '../ui/PostFormModal'
 
@@ -13,98 +15,94 @@ const ContentManagement = ({ producer }) => {
   const [likedPosts, setLikedPosts] = useState(new Set())
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingPost, setEditingPost] = useState(null)
-  const [postsData, setPostsData] = useState([
-    {
-      id: 1,
-      content: 'Today we harvested our premium organic vegetables including tomatoes, carrots, and leafy greens. Fresh from the farm to your table! 🥕🍅',
-      category: 'Vegetables',
-      producer: {
-        avatar: 'FV',
-        name: 'Fresh Valley Farm',
-        location: 'Kandy, Sri Lanka',
-        verified: true
-      },
-      images: ['/api/placeholder/400/300'],
-      likes: 89,
-      comments: 23,
-      timeAgo: '3d',
-      trending: false,
-      popularity: 85,
-      status: 'published'
-    },
-    {
-      id: 2,
-      content: 'Behind the scenes of our premium Ceylon cinnamon processing facility. Witness the traditional methods we use to bring you the finest spices! ✨',
-      category: 'Spices',
-      producer: {
-        avatar: 'CS',
-        name: 'Ceylon Spice Co.',
-        location: 'Colombo, Sri Lanka',
-        verified: true
-      },
-      images: ['/api/placeholder/400/300', '/api/placeholder/400/300'],
-      likes: 156,
-      comments: 34,
-      timeAgo: '5d',
-      trending: true,
-      popularity: 92,
-      status: 'published'
-    },
-    {
-      id: 3,
-      content: 'The beautiful morning mist over our tea estate in the hill country. There\'s nothing quite like starting the day with this view! 🌄',
-      category: 'Tea',
-      producer: {
-        avatar: 'HT',
-        name: 'Highland Tea Estate',
-        location: 'Nuwara Eliya, Sri Lanka',
-        verified: false
-      },
-      images: ['/api/placeholder/400/300'],
-      likes: 67,
-      comments: 15,
-      timeAgo: '1w',
-      trending: false,
-      popularity: 74,
-      status: 'published'
-    },
-    {
-      id: 4,
-      content: 'Our mango trees are ready for harvest next week. Premium quality fruits coming soon! Get ready for the sweetest mangoes you\'ve ever tasted 🥭',
-      category: 'Fruits',
-      producer: {
-        avatar: 'MO',
-        name: 'Mango Orchard Ltd',
-        location: 'Matale, Sri Lanka',
-        verified: false
-      },
-      images: [],
-      likes: 12,
-      comments: 3,
-      timeAgo: '2w',
-      trending: false,
-      popularity: 45,
-      status: 'draft'
-    },
-    {
-      id: 5,
-      content: 'Traditional method of extracting pure coconut oil from fresh coconuts. Preserving ancient techniques for modern quality standards.',
-      category: 'Coconut Products',
-      producer: {
-        avatar: 'CP',
-        name: 'Coconut Paradise',
-        location: 'Galle, Sri Lanka',
-        verified: true
-      },
-      images: ['/api/placeholder/400/300', '/api/placeholder/400/300', '/api/placeholder/400/300'],
-      likes: 234,
-      comments: 56,
-      timeAgo: '3w',
-      trending: false,
-      popularity: 88,
-      status: 'archived'
+  const [postsData, setPostsData] = useState([])
+  const [loadingPosts, setLoadingPosts] = useState(true)
+  const [postsError, setPostsError] = useState(null)
+
+  // Fetch posts from API
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!producer?.id) return
+
+      try {
+        setLoadingPosts(true)
+        setPostsError(null)
+
+        const response = await postsAPI.getByProducer(producer.id)
+
+        if (response.success) {
+          // Get unique category IDs from posts
+          const categoryIds = [...new Set(response.data.posts
+            .map(post => post.category_id)
+            .filter(id => id != null)
+          )]
+
+          // Fetch category names for category IDs
+          const categoryMap = {}
+          if (categoryIds.length > 0) {
+            const categoryPromises = categoryIds.map(id => categoriesService.getCategoryById(id))
+            const categoryResults = await Promise.all(categoryPromises)
+
+            categoryResults.forEach(result => {
+              if (result.success && result.category) {
+                categoryMap[result.category.id] = result.category.name
+              }
+            })
+          }
+
+          // Transform API response to match component expectations
+          const transformedPosts = response.data.posts.map(post => ({
+            id: post.id,
+            content: post.content,
+            category_id: post.category_id,
+            category: post.category_name || categoryMap[post.category_id] || 'Unknown', // Use category_name from API or fetch from categoryMap
+            producer: {
+              avatar: producer.avatar || producer.business_name?.charAt(0)?.toUpperCase() || 'P',
+              name: producer.business_name || 'Unknown Producer',
+              location: producer.location ? `${producer.location}, ${producer.province || ''}`.trim() : 'Unknown Location',
+              verified: producer.verified || false
+            },
+            images: post.images?.map(img => img.image_url) || [],
+            likes: post.total_likes || 0,
+            comments: post.total_comments || 0,
+            shares: post.total_shares || 0,
+            views: post.total_views || 0,
+            timeAgo: getTimeAgo(post.created_at),
+            trending: post.is_trending || false,
+            featured: post.is_featured || false,
+            popularity: post.popularity_score || 0,
+            status: post.status || 'published'
+          }))
+
+          setPostsData(transformedPosts)
+        } else {
+          throw new Error(response.message || 'Failed to fetch posts')
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error)
+        setPostsError(error.message || 'Failed to load posts')
+        setPostsData([])
+      } finally {
+        setLoadingPosts(false)
+      }
     }
-  ])
+
+    fetchPosts()
+  }, [producer])
+
+  // Helper function to calculate time ago
+  const getTimeAgo = (dateString) => {
+    const now = new Date()
+    const postDate = new Date(dateString)
+    const diffInMs = now - postDate
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+    const diffInDays = Math.floor(diffInHours / 24)
+
+    if (diffInHours < 1) return '0h'
+    if (diffInHours < 24) return `${diffInHours}h`
+    if (diffInDays < 7) return `${diffInDays}d`
+    return `${Math.floor(diffInDays / 7)}w`
+  }
 
   const filterOptions = [
     { value: 'all', label: 'All Posts' },
@@ -185,10 +183,82 @@ const ContentManagement = ({ producer }) => {
     }
   }
 
-  const handleBulkAction = (action) => {
-    console.log(`Bulk action: ${action} on posts:`, selectedPosts)
-    setSelectedPosts([])
-    setShowBulkActions(false)
+  const handleBulkAction = async (action) => {
+    if (action === 'delete') {
+      const confirmed = window.confirm(`Are you sure you want to delete ${selectedPosts.length} selected post(s)? This action cannot be undone.`);
+      if (!confirmed) return;
+
+      try {
+        const response = await postsAPI.bulkDelete(selectedPosts);
+        
+        if (response.success) {
+          // Refresh posts data
+          if (producer?.id) {
+            const refreshResponse = await postsAPI.getByProducer(producer.id);
+            if (refreshResponse.success) {
+              // Get unique category IDs from posts
+              const categoryIds = [...new Set(refreshResponse.data.posts
+                .map(post => post.category_id)
+                .filter(id => id != null)
+              )]
+
+              // Fetch category names for category IDs
+              const categoryMap = {}
+              if (categoryIds.length > 0) {
+                const categoryPromises = categoryIds.map(id => categoriesService.getCategoryById(id))
+                const categoryResults = await Promise.all(categoryPromises)
+
+                categoryResults.forEach(result => {
+                  if (result.success && result.category) {
+                    categoryMap[result.category.id] = result.category.name
+                  }
+                })
+              }
+
+              const transformedPosts = refreshResponse.data.posts.map(post => ({
+                id: post.id,
+                content: post.content,
+                category_id: post.category_id,
+                category: post.category_name || categoryMap[post.category_id] || 'Unknown',
+                producer: {
+                  avatar: producer.avatar || producer.business_name?.charAt(0)?.toUpperCase() || 'P',
+                  name: producer.business_name || 'Unknown Producer',
+                  location: producer.location ? `${producer.location}, ${producer.province || ''}`.trim() : 'Unknown Location',
+                  verified: producer.verified || false
+                },
+                images: post.images?.map(img => img.image_url) || [],
+                likes: post.total_likes || 0,
+                comments: post.total_comments || 0,
+                shares: post.total_shares || 0,
+                views: post.total_views || 0,
+                timeAgo: getTimeAgo(post.created_at),
+                trending: post.is_trending || false,
+                featured: post.is_featured || false,
+                popularity: post.popularity_score || 0,
+                status: post.status || 'published'
+              }))
+              setPostsData(transformedPosts)
+            }
+          }
+          
+          // Clear selection
+          setSelectedPosts([])
+          setShowBulkActions(false)
+          
+          // Show success message
+          alert(`Successfully deleted ${selectedPosts.length} post(s)`);
+        } else {
+          throw new Error(response.message || 'Failed to delete posts');
+        }
+      } catch (error) {
+        console.error('Bulk delete error:', error);
+        alert(`Failed to delete posts: ${error.message}`);
+      }
+    } else {
+      console.log(`Bulk action: ${action} on posts:`, selectedPosts)
+      setSelectedPosts([])
+      setShowBulkActions(false)
+    }
   }
 
   const handleLike = (postId) => {
@@ -220,30 +290,58 @@ const ContentManagement = ({ producer }) => {
     setEditingPost(null)
   }
 
-  const handlePostSubmit = (postData) => {
-    if (editingPost) {
-      // Edit existing post
-      setPostsData(prev => prev.map(post => 
-        post.id === editingPost.id ? { ...postData, id: editingPost.id } : post
-      ))
-    } else {
-      // Create new post
-      const newPost = {
-        ...postData,
-        id: Date.now(),
-        producer: {
-          avatar: 'YF',
-          name: 'Your Farm',
-          location: 'Your Location',
-          verified: false
-        },
-        likes: 0,
-        comments: 0,
-        timeAgo: '0h',
-        trending: false,
-        popularity: 0
+  const handlePostSubmit = async (postData) => {
+    // Refresh posts data after successful submission
+    if (producer?.id) {
+      try {
+        const response = await postsAPI.getByProducer(producer.id)
+        if (response.success) {
+          // Get unique category IDs from posts
+          const categoryIds = [...new Set(response.data.posts
+            .map(post => post.category_id)
+            .filter(id => id != null)
+          )]
+
+          // Fetch category names for category IDs
+          const categoryMap = {}
+          if (categoryIds.length > 0) {
+            const categoryPromises = categoryIds.map(id => categoriesService.getCategoryById(id))
+            const categoryResults = await Promise.all(categoryPromises)
+
+            categoryResults.forEach(result => {
+              if (result.success && result.category) {
+                categoryMap[result.category.id] = result.category.name
+              }
+            })
+          }
+
+          const transformedPosts = response.data.posts.map(post => ({
+            id: post.id,
+            content: post.content,
+            category_id: post.category_id,
+            category: post.category_name || categoryMap[post.category_id] || 'Unknown',
+            producer: {
+              avatar: producer.avatar || producer.business_name?.charAt(0)?.toUpperCase() || 'P',
+              name: producer.business_name || 'Unknown Producer',
+              location: producer.location ? `${producer.location}, ${producer.province || ''}`.trim() : 'Unknown Location',
+              verified: producer.verified || false
+            },
+            images: post.images?.map(img => img.image_url) || [],
+            likes: post.total_likes || 0,
+            comments: post.total_comments || 0,
+            shares: post.total_shares || 0,
+            views: post.total_views || 0,
+            timeAgo: getTimeAgo(post.created_at),
+            trending: post.is_trending || false,
+            featured: post.is_featured || false,
+            popularity: post.popularity_score || 0,
+            status: post.status || 'published'
+          }))
+          setPostsData(transformedPosts)
+        }
+      } catch (error) {
+        console.error('Error refreshing posts:', error)
       }
-      setPostsData(prev => [newPost, ...prev])
     }
   }
 
@@ -311,9 +409,9 @@ const ContentManagement = ({ producer }) => {
             </div>
             
             {/* Create New Post Button */}
-            <button className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+            {/* <button className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
               Create New Post
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -403,8 +501,56 @@ const ContentManagement = ({ producer }) => {
           </label>
         </div>
 
+        {/* Loading State */}
+        {loadingPosts && (
+          <div className="p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+            <p className="mt-4 text-primary-600">Loading your posts...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {postsError && !loadingPosts && (
+          <div className="p-12 text-center">
+            <div className="text-red-500 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-red-600 font-medium">Failed to load posts</p>
+            <p className="text-primary-600 text-sm mt-1">{postsError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loadingPosts && !postsError && sortedPosts.length === 0 && (
+          <div className="p-12 text-center">
+            <div className="text-primary-400 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <p className="text-primary-600 font-medium">No posts found</p>
+            <p className="text-primary-500 text-sm mt-1">Create your first post to get started</p>
+            <button
+              onClick={handleCreatePost}
+              className="mt-4 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+            >
+              Create New Post
+            </button>
+          </div>
+        )}
+
         {/* Content */}
-        {viewMode === 'grid' ? (
+        {!loadingPosts && !postsError && sortedPosts.length > 0 && (
+          <>
+            {viewMode === 'grid' ? (
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedPosts.map(post => (
               <div key={post.id} className="space-y-4">
@@ -487,6 +633,8 @@ const ContentManagement = ({ producer }) => {
               </div>
             ))}
           </div>
+        )}
+          </>
         )}
       </div>
       

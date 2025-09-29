@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { categoriesAPI } from '../services/api';
+import categoriesService from '../services/categoriesServices';
 
 // Custom hook for managing categories
 export const useCategories = (options = {}) => {
@@ -11,10 +11,13 @@ export const useCategories = (options = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await categoriesAPI.getAll(options);
-      // Ensure categories is always an array
-      const categoriesData = response.data || response || [];
-      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      const response = await categoriesService.getAllCategories(options);
+
+      if (response.success) {
+        setCategories(response.categories);
+      } else {
+        throw new Error(response.error || 'Failed to fetch categories');
+      }
     } catch (err) {
       setError(err.message);
       console.error('Failed to fetch categories:', err);
